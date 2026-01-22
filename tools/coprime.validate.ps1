@@ -52,7 +52,15 @@ function Read-JsonLines([string]$Path) {
 
 # --- Validate CanonicalPaths
 $paths = Read-FlatYaml -Path $PathsFile
-$required = @('CanonicalPathsVersion','MasterPlanLatest','PointerRegistry','CoShareRoot','CoSourcesRoot','InboxRoot','ArchiveRoot','PublicSnapshotsRoot')
+$required = @(
+  'MasterPlanLatest',
+  'PointerRegistry',
+  'CoShareRoot',
+  'CoSourcesRoot',
+  'InboxRoot',
+  'ArchiveRoot',
+  'PublicSnapshotsRoot'
+)
 foreach ($k in $required) { Require-Key $paths $k }
 
 # Required existence
@@ -102,4 +110,5 @@ foreach ($e in $entries) {
 }
 
 Write-Host "VALIDATE PASS: CanonicalPaths + PointerRegistry basic invariants OK."
+
 
