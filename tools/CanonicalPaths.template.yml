@@ -1,0 +1,16 @@
+# CanonicalPaths.template.yml
+# Keep this file SIMPLE (flat key: value pairs). The validator scripts parse this form without external YAML modules.
+CanonicalPathsVersion: "v1"
+
+# Required (minimum)
+MasterPlanLatest: "\\\\Server\\CoCiviumAdmin\\CoVault\\CoCiviumAdmin\\CoBux\\MasterPlan\\MasterPlan_LATEST.md"
+PointerRegistry:  "\\\\Server\\CoCiviumAdmin\\CoVault\\CoCiviumAdmin\\CoBux\\Registry\\PointerRegistry.jsonl"
+
+# Canon roots
+CoShareRoot:      "\\\\Server\\CoCiviumAdmin\\CoVault\\CoShare"
+CoSourcesRoot:    "\\\\Server\\CoCiviumAdmin\\CoVault\\CoSources"
+
+# Ops roots
+InboxRoot:        "\\\\Server\\CoCiviumAdmin\\CoVault\\CoCiviumAdmin\\CoBux\\INBOX"
+ArchiveRoot:      "\\\\Server\\CoCiviumAdmin\\CoVault\\CoCiviumAdmin\\CoBux\\ARCHIVE"
+PublicSnapshotsRoot: "\\\\Server\\CoCiviumAdmin\\CoVault\\PublicSnapshots"

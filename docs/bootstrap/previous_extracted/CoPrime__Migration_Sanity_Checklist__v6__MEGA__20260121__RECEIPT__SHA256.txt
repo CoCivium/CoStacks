@@ -1,0 +1,32 @@
+RECEIPT — SHA256
+Build UTC: 20260121T204953Z
+Package: CoPrime__Migration_Sanity_Checklist__v6__MEGA__20260121.zip
+
+PRIMARY PAIR:
+- CoPrime__Migration_Sanity_Checklist__v6__MEGA__20260121.md  be355149db79240bf0c1b29a284789f3a5601eecf5f5026dae8221dd9b0969bb
+- CoPrime__Migration_Sanity_Checklist__v6__MEGA__20260121__RECEIPT__SHA256.txt  (hash computed externally)
+
+MANIFEST:
+- CoPrime__Migration_Sanity_Checklist__v6__MEGA__20260121__MANIFEST.json  baee925427c1f87ee1d7818e591e7b1d2c554638e9db0eabb3cf42b8c3f49737
+
+FILES (SHA256) — all bundle members except receipt:
+- CoPrime__Migration_Sanity_Checklist__v6__MEGA__20260121.md  be355149db79240bf0c1b29a284789f3a5601eecf5f5026dae8221dd9b0969bb
+- tools/CanonicalPaths.template.yml  2031d5ae69bff35cb164a1ffdec4efc91cc97cbce5895c59017a969ad64ea585
+- tools/PointerRegistry.template.jsonl  6ed00d36f05ed8f3f073fcd9c3a9247aade12e4c9972909917c8b28a06a74200
+- tools/TOOLS_README.md  ff50e947e3c61166c3c2b62b5744c9e50638531810676f5aae6b427831b8881e
+- tools/coprime.drift_scan.ps1  98642fb95e1ab70c53e984ebddd6bb513679121762ac1f144c1dd47eddc4dc15
+- tools/coprime.manifest.ps1  3b13b1eeddc831e97a0857cb8b3b76cf56a6da7b44e4021bae6b40f7609c0cff
+- tools/coprime.validate.ps1  6684aa58d6c0a31cd94eece7b547d7aa5c7c18464c3af154c55fc41e2adc5c42
+- previous/CoPrime__Migration_Sanity_Checklist__v2__20260121.zip  6e01e5f719e637db06b0d677727716b650572ae94651e090ce797488c2d56535
+- previous/CoPrime__Migration_Sanity_Checklist__v3__20260121.zip  2af46e25c42a6dc80bfef23a6bcf250f0623389d2f210c7e53087c84317e72fe
+- previous/CoPrime__Migration_Sanity_Checklist__v4__20260121.zip  1054f9f9e13d80001d4ae27d14afd2765746b01214da6a374cf78d3f590ed402
+- previous/CoPrime__Migration_Sanity_Checklist__v5__20260121.zip  3c071195e14fc158c2800a5527aa66f13a981ab6138c4405bcf1fa656b98d6c8
+
+VERIFY (PowerShell):
+  Get-FileHash -Algorithm SHA256 "CoPrime__Migration_Sanity_Checklist__v6__MEGA__20260121.zip"
+  Get-FileHash -Algorithm SHA256 "CoPrime__Migration_Sanity_Checklist__v6__MEGA__20260121.md"
+  Get-FileHash -Algorithm SHA256 "CoPrime__Migration_Sanity_Checklist__v6__MEGA__20260121__RECEIPT__SHA256.txt"
+
+NOTES:
+- The receipt does not include the ZIP hash line (self-reference problem). Compute ZIP hash externally.
+- This MEGA bundle includes prior version zips (when present) for auditability.

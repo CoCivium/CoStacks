@@ -1,0 +1,30 @@
+RECEIPT — SHA256
+Build UTC: 20260121T160650Z
+Package: CoPrime__Migration_Sanity_Checklist__v4__20260121.zip  a86c1e192d20a49a74aa28c862906ef944f6258297ee3ef96fa92308f5db38ce
+
+CONTINUITY (prior references):
+- v1 doc: CoPrime__Migration_Sanity_Checklist__v1__20260121.md  e77a3d396ab1cd7f808c9c1b169b1a966c88754544aa76455567bdc8e864bb1f
+- v1 zip: CoPrime__Migration_Sanity_Checklist__v1__20260121.zip  5697d810f447769dcd4bfaa97a28bd40782a99213ff3c6bdbae5e4c0491198da
+- v2 doc: CoPrime__Migration_Sanity_Checklist__v2__20260121.md  45f437a27739540746bd5d3559fc718ab6310616a588d875392d40d919e00f81
+- v2 zip: CoPrime__Migration_Sanity_Checklist__v2__20260121.zip  6e01e5f719e637db06b0d677727716b650572ae94651e090ce797488c2d56535
+- v3 doc: CoPrime__Migration_Sanity_Checklist__v3__20260121.md  c2c100d811ce37468e1c304641a34f8f7f2e06527957cf0db9a47b8a7f358570
+- v3 zip: CoPrime__Migration_Sanity_Checklist__v3__20260121.zip  2af46e25c42a6dc80bfef23a6bcf250f0623389d2f210c7e53087c84317e72fe
+
+FILES (SHA256):
+- CoPrime__Migration_Sanity_Checklist__v4__20260121.md  637e78ebc59a971e3399af59b2f0110a591621a157795c3b67575eb6b13d1c80
+- CoPrime__Migration_Sanity_Checklist__v4__20260121__RECEIPT__SHA256.txt  a90d7615b45705ca3f284a4506d8b63fc61a35bcaa9c5fea992f6b2fc50f61db
+
+VERIFY (PowerShell):
+  Get-FileHash -Algorithm SHA256 "CoPrime__Migration_Sanity_Checklist__v4__20260121.zip"
+  Get-FileHash -Algorithm SHA256 "CoPrime__Migration_Sanity_Checklist__v4__20260121.md"
+  Get-FileHash -Algorithm SHA256 "CoPrime__Migration_Sanity_Checklist__v4__20260121__RECEIPT__SHA256.txt"
+
+VERIFY (macOS/Linux):
+  shasum -a 256 "CoPrime__Migration_Sanity_Checklist__v4__20260121.zip"
+  shasum -a 256 "CoPrime__Migration_Sanity_Checklist__v4__20260121.md"
+  shasum -a 256 "CoPrime__Migration_Sanity_Checklist__v4__20260121__RECEIPT__SHA256.txt"
+
+NOTES:
+- This receipt travels with the package.
+- Future versions preserve prior versions + receipts (no deletion; use DEPRECATED + pointers).
+- Canon rule: one canonical home per asset; everything else is mirror/cache/snapshot.

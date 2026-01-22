@@ -1,0 +1,147 @@
+{
+  "package": "CoPrime__Migration_Sanity_Checklist__v7__MEGA__20260121.zip",
+  "generated_utc": "20260121T210125Z",
+  "file_count": 29,
+  "files": [
+    {
+      "path": "CoPrime__Migration_Sanity_Checklist__v7__MEGA__20260121.md",
+      "bytes": 61754,
+      "sha256": "3d36124b97eb58c47684e37f331723016ed45659d434ae93d9dee5d3dad0a2d2"
+    },
+    {
+      "path": "tools/CanonicalPaths.template.yml",
+      "bytes": 822,
+      "sha256": "2031d5ae69bff35cb164a1ffdec4efc91cc97cbce5895c59017a969ad64ea585"
+    },
+    {
+      "path": "tools/PointerRegistry.template.jsonl",
+      "bytes": 362,
+      "sha256": "6ed00d36f05ed8f3f073fcd9c3a9247aade12e4c9972909917c8b28a06a74200"
+    },
+    {
+      "path": "tools/TOOLS_README.md",
+      "bytes": 1124,
+      "sha256": "ff50e947e3c61166c3c2b62b5744c9e50638531810676f5aae6b427831b8881e"
+    },
+    {
+      "path": "tools/coprime.drift_scan.ps1",
+      "bytes": 3189,
+      "sha256": "98642fb95e1ab70c53e984ebddd6bb513679121762ac1f144c1dd47eddc4dc15"
+    },
+    {
+      "path": "tools/coprime.manifest.ps1",
+      "bytes": 1107,
+      "sha256": "3b13b1eeddc831e97a0857cb8b3b76cf56a6da7b44e4021bae6b40f7609c0cff"
+    },
+    {
+      "path": "tools/coprime.validate.ps1",
+      "bytes": 3976,
+      "sha256": "6684aa58d6c0a31cd94eece7b547d7aa5c7c18464c3af154c55fc41e2adc5c42"
+    },
+    {
+      "path": "tools/coprime.verify_manifest.ps1",
+      "bytes": 1194,
+      "sha256": "87d1d393657caf27869c217da49f5a97c9757cad64313fddd7c18f98cc889573"
+    },
+    {
+      "path": "templates/CitationCapture.template.md",
+      "bytes": 344,
+      "sha256": "98190038b1f8796a1bcfb7a83eab6b2ec8fd20b6b9acb7db1c266ea52e98db61"
+    },
+    {
+      "path": "templates/RedactionChecklist.template.md",
+      "bytes": 645,
+      "sha256": "c7d0067cd3b08b5dfab8fe3352c8f81da6eaec9f1ed922b7f75e39ce39bf27c2"
+    },
+    {
+      "path": "templates/RepoAboutExamples.template.md",
+      "bytes": 559,
+      "sha256": "61af072dc1ef45bda33913b2a4478f3006b67828770f06392b6894d1d486b8cb"
+    },
+    {
+      "path": "schemas/PointerRegistryEntry.schema.json",
+      "bytes": 1134,
+      "sha256": "81b5e8f87167e0a495023f0b180b14f49ee8612ebf1872b035e025f593fc13f7"
+    },
+    {
+      "path": "previous/CoPrime__Migration_Sanity_Checklist__v2__20260121.zip",
+      "bytes": 7540,
+      "sha256": "6e01e5f719e637db06b0d677727716b650572ae94651e090ce797488c2d56535"
+    },
+    {
+      "path": "previous/CoPrime__Migration_Sanity_Checklist__v3__20260121.zip",
+      "bytes": 5459,
+      "sha256": "2af46e25c42a6dc80bfef23a6bcf250f0623389d2f210c7e53087c84317e72fe"
+    },
+    {
+      "path": "previous/CoPrime__Migration_Sanity_Checklist__v4__20260121.zip",
+      "bytes": 6522,
+      "sha256": "1054f9f9e13d80001d4ae27d14afd2765746b01214da6a374cf78d3f590ed402"
+    },
+    {
+      "path": "previous/CoPrime__Migration_Sanity_Checklist__v5__20260121.zip",
+      "bytes": 9163,
+      "sha256": "3c071195e14fc158c2800a5527aa66f13a981ab6138c4405bcf1fa656b98d6c8"
+    },
+    {
+      "path": "previous/CoPrime__Migration_Sanity_Checklist__v6__MEGA__20260121.zip",
+      "bytes": 41651,
+      "sha256": "15d8c2bd864ef94d4898de67681902ccb45b208068f72f72a130fcdb4da20b3d"
+    },
+    {
+      "path": "previous_extracted/CoPrime__Migration_Sanity_Checklist__v2__20260121.md",
+      "bytes": 14529,
+      "sha256": "45f437a27739540746bd5d3559fc718ab6310616a588d875392d40d919e00f81"
+    },
+    {
+      "path": "previous_extracted/CoPrime__Migration_Sanity_Checklist__v2__20260121__RECEIPT__SHA256.txt",
+      "bytes": 1561,
+      "sha256": "d5b371e8bea9b08e0d89bf951ea318a159c103232b6f6f361b667905da666180"
+    },
+    {
+      "path": "previous_extracted/CoPrime__Migration_Sanity_Checklist__v3__20260121.md",
+      "bytes": 8976,
+      "sha256": "c2c100d811ce37468e1c304641a34f8f7f2e06527957cf0db9a47b8a7f358570"
+    },
+    {
+      "path": "previous_extracted/CoPrime__Migration_Sanity_Checklist__v3__20260121__RECEIPT__SHA256.txt",
+      "bytes": 1793,
+      "sha256": "5b66fb4a8eff841e6844cbf0be7b4c310aa5ebf4742c3317211dc627b1bee015"
+    },
+    {
+      "path": "previous_extracted/CoPrime__Migration_Sanity_Checklist__v4__20260121.md",
+      "bytes": 11380,
+      "sha256": "637e78ebc59a971e3399af59b2f0110a591621a157795c3b67575eb6b13d1c80"
+    },
+    {
+      "path": "previous_extracted/CoPrime__Migration_Sanity_Checklist__v4__20260121__RECEIPT__SHA256.txt",
+      "bytes": 2052,
+      "sha256": "05c9e08de1482f2da54e6bd739c6f5224d0293015ce6d1683487b0c1cc5cea15"
+    },
+    {
+      "path": "previous_extracted/CoPrime__Migration_Sanity_Checklist__v5__20260121.md",
+      "bytes": 3900,
+      "sha256": "903105d8a90c1854bbc1fe8a3ce8fcc2ac211a34058d9bd3f288c1061f50da83"
+    },
+    {
+      "path": "previous_extracted/CoPrime__Migration_Sanity_Checklist__v5__20260121__RECEIPT__SHA256.txt",
+      "bytes": 2172,
+      "sha256": "b34289fb98d580fefdbd11305345c5e0cb6e0198bc2f6ede1bcf989847104d52"
+    },
+    {
+      "path": "previous_extracted/CoPrime__Migration_Sanity_Checklist__v6__MEGA__20260121.md",
+      "bytes": 11144,
+      "sha256": "be355149db79240bf0c1b29a284789f3a5601eecf5f5026dae8221dd9b0969bb"
+    },
+    {
+      "path": "previous_extracted/CoPrime__Migration_Sanity_Checklist__v6__MEGA__20260121__RECEIPT__SHA256.txt",
+      "bytes": 2320,
+      "sha256": "73d585af105dc127832356032f8c3fe7f604e976101ac126ea3bb21578a7973e"
+    },
+    {
+      "path": "previous_extracted/TOOLS_README.md",
+      "bytes": 1124,
+      "sha256": "ff50e947e3c61166c3c2b62b5744c9e50638531810676f5aae6b427831b8881e"
+    }
+  ]
+}

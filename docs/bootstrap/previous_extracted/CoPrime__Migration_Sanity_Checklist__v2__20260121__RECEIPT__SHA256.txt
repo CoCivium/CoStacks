@@ -1,0 +1,26 @@
+RECEIPT — SHA256
+Build UTC: 20260121T152433Z
+Package: CoPrime__Migration_Sanity_Checklist__v2__20260121.zip  0b9c21dd64aa9bc18684fc9887702a937b4475be50d2e07b8aaea90a6e9d7d3f
+
+CONTINUITY (prior version references):
+- v1 doc: CoPrime__Migration_Sanity_Checklist__v1__20260121.md  e77a3d396ab1cd7f808c9c1b169b1a966c88754544aa76455567bdc8e864bb1f
+- v1 zip: CoPrime__Migration_Sanity_Checklist__v1__20260121.zip  5697d810f447769dcd4bfaa97a28bd40782a99213ff3c6bdbae5e4c0491198da
+
+FILES (SHA256):
+- CoPrime__Migration_Sanity_Checklist__v2__20260121.md  45f437a27739540746bd5d3559fc718ab6310616a588d875392d40d919e00f81
+- CoPrime__Migration_Sanity_Checklist__v2__20260121__RECEIPT__SHA256.txt  f676067a61f0756fa3687545c609d72dbc7e11c4bce76e94535a3996c9adc50c
+
+VERIFY (PowerShell):
+  Get-FileHash -Algorithm SHA256 "CoPrime__Migration_Sanity_Checklist__v2__20260121.zip"
+  Get-FileHash -Algorithm SHA256 "CoPrime__Migration_Sanity_Checklist__v2__20260121.md"
+  Get-FileHash -Algorithm SHA256 "CoPrime__Migration_Sanity_Checklist__v2__20260121__RECEIPT__SHA256.txt"
+
+VERIFY (macOS/Linux):
+  shasum -a 256 "CoPrime__Migration_Sanity_Checklist__v2__20260121.zip"
+  shasum -a 256 "CoPrime__Migration_Sanity_Checklist__v2__20260121.md"
+  shasum -a 256 "CoPrime__Migration_Sanity_Checklist__v2__20260121__RECEIPT__SHA256.txt"
+
+NOTES:
+- This receipt is intended to travel with the package.
+- Future versions must preserve prior versions + receipts (no deletion; use DEPRECATED + pointers).
+- Canon rule: one canonical home per asset; everything else is mirror/cache/snapshot.
