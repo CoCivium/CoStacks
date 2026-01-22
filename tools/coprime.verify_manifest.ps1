@@ -1,42 +1,35 @@
-# coprime.verify_manifest.ps1
-# Verify MANIFEST.json file hashes against a folder.
-# Usage: ./coprime.verify_manifest.ps1 -Manifest .\MANIFEST.json -Root .\
-[CmdletBinding()]
 param(
   [Parameter(Mandatory=$true)][string]$Manifest,
-  [Parameter(Mandatory=$true)][string]$Root
+  [Parameter(Mandatory=$false)][string]$Root = (Split-Path $PSScriptRoot -Parent)
 )
 
 $ErrorActionPreference='Stop'
 Set-StrictMode -Version Latest
 
-if (!(Test-Path -LiteralPath $Manifest)) { throw "Missing manifest: $Manifest" }
-if (!(Test-Path -LiteralPath $Root)) { throw "Missing root: $Root" }
+function Fail([string]$msg){ Write-Host $msg; exit 1 }
 
-$rootPath = (Resolve-Path -LiteralPath $Root).Path
-$man = Get-Content -LiteralPath $Manifest -Encoding UTF8 | ConvertFrom-Json
+if(!(Test-Path -LiteralPath $Manifest)){ Fail "VERIFY FAIL: Missing manifest: $Manifest" }
+if(!(Test-Path -LiteralPath $Root)){ Fail "VERIFY FAIL: Missing root: $Root" }
 
-$fail = 0
-foreach ($f in $man.files) {
-  $rel = [string]$f.path
-  $expected = ([string]$f.sha256).ToLowerInvariant()
-  $full = Join-Path $rootPath $rel
-  if (!(Test-Path -LiteralPath $full)) {
-    Write-Host "MISSING: $rel"
-    $fail++
+$m = (Get-Content -LiteralPath $Manifest -Raw -Encoding UTF8) | ConvertFrom-Json
+$rootFull = (Resolve-Path -LiteralPath $Root).Path
+
+$bad = @()
+foreach($e in @($m.files)){
+  $p = Join-Path $rootFull ($e.path -replace '/','\')
+  if(!(Test-Path -LiteralPath $p)){
+    $bad += "MISSING: $($e.path)"
     continue
   }
-  $actual = (Get-FileHash -Algorithm SHA256 -LiteralPath $full).Hash.ToLowerInvariant()
-  if ($actual -ne $expected) {
-    Write-Host "MISMATCH: $rel expected=$expected actual=$actual"
-    $fail++
+  $h = (Get-FileHash -Algorithm SHA256 -LiteralPath $p).Hash.ToLowerInvariant()
+  if($h -ne ([string]$e.sha256).ToLowerInvariant()){
+    $bad += "HASH_MISMATCH: $($e.path)"
   }
 }
 
-if ($fail -gt 0) {
-  Write-Host "VERIFY FAIL: $fail problems"
-  exit 2
-} else {
-  Write-Host "VERIFY PASS"
-  exit 0
+if($bad.Count -gt 0){
+  $bad | ForEach-Object { Write-Host $_ }
+  Fail "VERIFY FAIL"
 }
+
+Write-Host "VERIFY PASS"

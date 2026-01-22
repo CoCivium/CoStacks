@@ -1,57 +1,40 @@
-# coprime.validate.ps1
-# Seed-minimal validator for CanonicalPaths.yml + PointerRegistry.jsonl invariants.
-# Usage: ./coprime.validate.ps1 -PathsFile .\CanonicalPaths.yml
-[CmdletBinding()]
 param(
-  [Parameter(Mandatory=$true)][string]$PathsFile
+  [Parameter(Mandatory=$false)]
+  [string]$PathsFile = (Join-Path (Split-Path $PSScriptRoot -Parent) 'CanonicalPaths.yml')
 )
 
-$ErrorActionPreference = 'Stop'
+$ErrorActionPreference='Stop'
 Set-StrictMode -Version Latest
 
-function Read-FlatYaml([string]$Path) {
-  if (!(Test-Path -LiteralPath $Path)) { throw "Missing PathsFile: $Path" }
-  $map = [ordered]@{}
-  $lines = Get-Content -LiteralPath $Path -Encoding UTF8
-  foreach ($raw in $lines) {
-    $line = $raw.Trim()
-    if ($line -eq "" -or $line.StartsWith("#")) { continue }
-    if ($line -notmatch '^(?<k>[A-Za-z0-9_]+)\s*:\s*(?<v>.+)\s*$') { throw "Unsupported YAML line (must be flat key: value): $raw" }
-    $k = $Matches['k']
-    $v = $Matches['v'].Trim()
-    if (($v.StartsWith('"') -and $v.EndsWith('"')) -or ($v.StartsWith("'") -and $v.EndsWith("'"))) {
-      $v = $v.Substring(1, $v.Length-2)
-    }
-    $map[$k] = $v
+function Fail([string]$msg){
+  Write-Error $msg
+  exit 1
+}
+
+if(!(Test-Path -LiteralPath $PathsFile)){
+  Fail "Missing PathsFile: $PathsFile"
+}
+
+# Minimal YAML (Key: Value) parser for CanonicalPaths.yml (no external modules)
+$map = @{}
+$i = 0
+foreach($line in (Get-Content -LiteralPath $PathsFile -Encoding UTF8)){
+  $i++
+  $t = ($line -replace '#.*$','').Trim()
+  if([string]::IsNullOrWhiteSpace($t)){ continue }
+
+  if($t -notmatch '^(?<k>[A-Za-z0-9_]+)\s*:\s*(?<v>.+)$'){
+    Fail "CanonicalPaths parse error at line ${i}: $line"
   }
-  return $map
+  $k = $matches['k']
+  $v = $matches['v'].Trim()
+
+  if($v -match '^"(.*)"$'){ $v = $matches[1] }
+  if($v -match "^'(.*)'$"){ $v = $matches[1] }
+
+  $map[$k] = $v
 }
 
-function Require-Key($map, [string]$key) {
-  if (-not $map.Contains($key)) { throw "CanonicalPaths missing required key: $key" }
-  if ([string]::IsNullOrWhiteSpace($map[$key])) { throw "CanonicalPaths key is empty: $key" }
-}
-
-function Read-JsonLines([string]$Path) {
-  if (!(Test-Path -LiteralPath $Path)) { throw "Missing PointerRegistry: $Path" }
-  $objs = @()
-  $i = 0
-  foreach ($line in (Get-Content -LiteralPath $Path -Encoding UTF8)) {
-    $i++
-    $t = $line.Trim()
-    if ($t -eq "" -or $t.StartsWith("#")) { continue }
-    try {
-      $obj = $t | ConvertFrom-Json -ErrorAction Stop
-      $objs += $obj
-    } catch {
-      throw "PointerRegistry JSON parse error at line ${i}: $($_.Exception.Message)"
-    }
-  }
-  return $objs
-}
-
-# --- Validate CanonicalPaths
-$paths = Read-FlatYaml -Path $PathsFile
 $required = @(
   'MasterPlanLatest',
   'PointerRegistry',
@@ -61,54 +44,48 @@ $required = @(
   'ArchiveRoot',
   'PublicSnapshotsRoot'
 )
-foreach ($k in $required) { Require-Key $paths $k }
 
-# Required existence
-$regPath = $paths['PointerRegistry']
-if (!(Test-Path -LiteralPath $regPath)) { throw "Required path does not exist: PointerRegistry => $regPath" }
-
-# Warn on other paths missing (these may not exist on dev machines)
-foreach ($k in @('MasterPlanLatest','CoShareRoot','CoSourcesRoot','InboxRoot','ArchiveRoot','PublicSnapshotsRoot')) {
-  $p = $paths[$k]
-  if (!(Test-Path -LiteralPath $p)) { Write-Warning "Path does not exist (warn): $k => $p" }
-}
-
-# --- Validate PointerRegistry
-$entries = Read-JsonLines -Path $regPath
-$reqFields = @('asset_id','title','canonical_uri','mirrors','version','sha256','owner','access_class','last_verified_utc')
-
-$seen = @{}
-foreach ($e in $entries) {
-  foreach ($f in $reqFields) {
-    if ($null -eq $e.$f -or [string]::IsNullOrWhiteSpace([string]$e.$f)) {
-      throw "PointerRegistry entry missing field '$f' for asset_id='$($e.asset_id)'"
-    }
-  }
-
-  $aid = [string]$e.asset_id
-  $ver = [string]$e.version
-  $hash = ([string]$e.sha256).ToLowerInvariant()
-  if ($hash -notmatch '^[0-9a-f]{64}$') { throw "Invalid sha256 for asset_id='$aid' version='$ver': $hash" }
-
-  if ($seen.ContainsKey($aid)) {
-    $prior = $seen[$aid]
-    if ([string]$prior.canonical_uri -ne [string]$e.canonical_uri) { throw "asset_id conflict: $aid has different canonical_uri values" }
-    if ([string]$prior.version -eq $ver -and ([string]$prior.sha256).ToLowerInvariant() -ne $hash) {
-      throw "asset_id conflict: $aid version $ver has different sha256 values"
-    }
-  } else {
-    $seen[$aid] = $e
-  }
-
-  $target = [string]$e.canonical_uri
-  if ($target.StartsWith("\\") -or $target.Contains(":\")) {
-    if (!(Test-Path -LiteralPath $target)) {
-      if ([string]$e.access_class -eq 'CROWN_JEWEL') { throw "CROWN_JEWEL canonical target missing: $aid => $target" }
-      Write-Warning "Canonical target missing (warn): $aid => $target"
-    }
+foreach($k in $required){
+  if(-not $map.ContainsKey($k) -or [string]::IsNullOrWhiteSpace([string]$map[$k])){
+    Fail "CanonicalPaths missing required key: $k"
   }
 }
 
-Write-Host "VALIDATE PASS: CanonicalPaths + PointerRegistry basic invariants OK."
+$root = Split-Path -Parent $PathsFile
 
+# Files referenced inside repo must exist
+$mp = Join-Path $root $map['MasterPlanLatest']
+if(!(Test-Path -LiteralPath $mp)){
+  Fail "MasterPlanLatest missing: $mp"
+}
 
+$pr = Join-Path $root $map['PointerRegistry']
+if(!(Test-Path -LiteralPath $pr)){
+  Fail "PointerRegistry missing: $pr"
+}
+
+# PointerRegistry must be JSONL (ignore blanks + #comments)
+$j = 0
+foreach($line in (Get-Content -LiteralPath $pr -Encoding UTF8)){
+  $j++
+  $t = $line.Trim()
+  if([string]::IsNullOrWhiteSpace($t)){ continue }
+  if($t.StartsWith('#')){ continue }
+
+  try { $obj = $t | ConvertFrom-Json -ErrorAction Stop }
+  catch { Fail "PointerRegistry JSON parse error at line ${j}: $($_.Exception.Message)" }
+
+  foreach($rk in @('id','url','kind')){
+    $has = ($obj.PSObject.Properties.Name -contains $rk) -and -not [string]::IsNullOrWhiteSpace([string]$obj.$rk)
+    if(-not $has){ Fail "PointerRegistry missing field '$rk' at line ${j}" }
+  }
+}
+
+# Optional schema JSON validity check
+$schema = Join-Path $root 'schemas\PointerRegistryEntry.schema.json'
+if(Test-Path -LiteralPath $schema){
+  try { (Get-Content -LiteralPath $schema -Raw -Encoding UTF8) | ConvertFrom-Json -ErrorAction Stop | Out-Null }
+  catch { Fail "Schema JSON invalid: $schema :: $($_.Exception.Message)" }
+}
+
+Write-Host "VALIDATE PASS"

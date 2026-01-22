@@ -1,35 +1,39 @@
-# coprime.manifest.ps1
-# Create MANIFEST.json for a folder: list files + sha256.
-# Usage: ./coprime.manifest.ps1 -InDir .\Package -OutFile .\MANIFEST.json
-[CmdletBinding()]
 param(
-  [Parameter(Mandatory=$true)][string]$InDir,
-  [Parameter(Mandatory=$true)][string]$OutFile
+  [Parameter(Mandatory=$false)][string]$Root = (Split-Path $PSScriptRoot -Parent),
+  [Parameter(Mandatory=$false)][string]$Out  = (Join-Path (Split-Path $PSScriptRoot -Parent) ("MANIFEST_{0}.json" -f (Get-Date).ToUniversalTime().ToString('yyyyMMddTHHmmssZ')))
 )
 
-$ErrorActionPreference = 'Stop'
+$ErrorActionPreference='Stop'
 Set-StrictMode -Version Latest
 
-if (!(Test-Path -LiteralPath $InDir)) { throw "Missing InDir: $InDir" }
-$root = (Resolve-Path -LiteralPath $InDir).Path
+$rootFull = (Resolve-Path -LiteralPath $Root).Path
+$outFull  = (Resolve-Path -LiteralPath (Split-Path -Parent $Out) -ErrorAction SilentlyContinue)?.Path
+if(-not $outFull){ New-Item -ItemType Directory -Force -Path (Split-Path -Parent $Out) | Out-Null }
 
-$files = Get-ChildItem -LiteralPath $root -Recurse -File | Sort-Object FullName
+# enumerate files (exclude .git and the output manifest itself if under Root)
+$files = Get-ChildItem -LiteralPath $rootFull -Recurse -File -Force |
+  Where-Object {
+    $_.FullName -notmatch '\\\.git\\' -and
+    $_.FullName -ne (Resolve-Path -LiteralPath $Out -ErrorAction SilentlyContinue).Path
+  } |
+  Sort-Object FullName
 
-$items = foreach ($f in $files) {
-  $rel = $f.FullName.Substring($root.Length).TrimStart('\','/')
+$entries = foreach($f in $files){
+  $rel = $f.FullName.Substring($rootFull.Length).TrimStart('\','/')
   [pscustomobject]@{
-    path = $rel
-    bytes = $f.Length
+    path   = ($rel -replace '\\','/')
+    bytes  = [int64]$f.Length
     sha256 = (Get-FileHash -Algorithm SHA256 -LiteralPath $f.FullName).Hash.ToLowerInvariant()
   }
 }
 
 $manifest = [pscustomobject]@{
-  generated_utc = (Get-Date).ToUniversalTime().ToString("o")
-  root = $root
-  file_count = $items.Count
-  files = $items
+  manifest_version = "v1"
+  generated_utc    = (Get-Date).ToUniversalTime().ToString('yyyyMMddTHHmmssZ')
+  root             = ($rootFull -replace '\\','/')
+  file_count       = @($entries).Count
+  files            = @($entries)
 }
 
-$manifest | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $OutFile -Encoding UTF8
-Write-Host "MANIFEST written: $OutFile (files=$($items.Count))"
+($manifest | ConvertTo-Json -Depth 10) | Set-Content -LiteralPath $Out -Encoding UTF8
+Write-Host ("MANIFEST OK: {0}" -f $Out)

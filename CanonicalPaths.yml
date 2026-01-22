@@ -1,6 +1,6 @@
 CanonicalPathsVersion: v1
-MasterPlanLatest: .\docs\bootstrap\CoPrime__Migration_Sanity_Checklist__v7__MEGA__20260121.md
-PointerRegistry: .\tools\PointerRegistry.template.jsonl
+MasterPlanLatest: docs/bootstrap/CoPrime__Migration_Sanity_Checklist__v7__MEGA__20260121.md
+PointerRegistry: tools/PointerRegistry.template.jsonl
 CoShareRoot: \\SERVER\CoShare
 CoSourcesRoot: \\SERVER\CoSources
 InboxRoot: \\SERVER\CoSources\INBOX
