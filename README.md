@@ -1,12 +1,7 @@
-# CoStacks
-Operational toolchain + templates + CI rails.
+# CoStacks (shadow-mode)
 
-## What lands here
-- CanonicalPaths template (YAML)
-- PointerRegistry template (JSONL) + schema
-- Manifest + validate + drift scan + verify scripts (PowerShell)
-- Seed bootstrap checklist snapshot (provenance)
+This repo hosts early-stage automation ("CoGuardian") that **reads** CoBusMirror public RAW surfaces and emits **report-only** dashboards.
 
-## Intended usage
-Other repos/sessions consume RAW pointers (from CoBeacon) to these templates/scripts.
-CI keeps the toolchain reproducible.
+- Shadow-mode only: no enforcement, no edits to other repos.
+- Deterministic inputs: commit-pinned RAW URLs (CoBusMirror SHA) whenever possible.
+- Prime label: 4.0|PRIME|260216
