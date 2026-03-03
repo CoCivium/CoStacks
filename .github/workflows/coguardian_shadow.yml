@@ -1,0 +1,57 @@
+name: coguardian-shadow
+
+on:
+  workflow_dispatch:
+    inputs:
+      cobusmirror_sha:
+        description: 'CoBusMirror commit SHA to scan (commit-pinned)'
+        required: true
+  schedule:
+    - cron: '17 3 * * *'   # daily 03:17 UTC
+
+permissions:
+  contents: write
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout CoStacks
+        uses: actions/checkout@v4
+
+      - name: Determine SHA (dispatch input wins; else read docs/COBUSMIRROR_SHA__LATEST.txt)
+        id: sha
+        shell: bash
+        run: |
+          if [ -n "${{ github.event.inputs.cobusmirror_sha }}" ]; then
+            echo "sha=${{ github.event.inputs.cobusmirror_sha }}" >> "$GITHUB_OUTPUT"
+          else
+            if [ ! -f docs/COBUSMIRROR_SHA__LATEST.txt ]; then
+              echo "Missing docs/COBUSMIRROR_SHA__LATEST.txt" >&2
+              exit 2
+            fi
+            SHA="$(cat docs/COBUSMIRROR_SHA__LATEST.txt | tr -d ' \r\n\t')"
+            if [ -z "$SHA" ]; then
+              echo "Empty SHA in docs/COBUSMIRROR_SHA__LATEST.txt" >&2
+              exit 2
+            fi
+            echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run scan
+        shell: pwsh
+        run: |
+          pwsh -NoProfile -File tools/coguardian/scan.ps1 -CoBusMirrorSha "${{ steps.sha.outputs.sha }}" -MaxSubs 100 -OutPath "docs/COHEALTH__LATEST.md"
+
+      - name: Commit updated COHEALTH
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "No changes."
+            exit 0
+          fi
+          git config user.name "coguardian-shadow"
+          git config user.email "coguardian-shadow@users.noreply.github.com"
+          git add docs/COHEALTH__LATEST.md
+          git commit -m "CoGuardian(shadow): refresh COHEALTH__LATEST"
+          git push
