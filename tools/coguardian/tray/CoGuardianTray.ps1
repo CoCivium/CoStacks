@@ -1,4 +1,4 @@
-# CoGuardianTray.ps1 - minimal visible system-tray surface for CoStacks (MVP)
+﻿# CoGuardianTray.ps1 - minimal visible system-tray surface for CoStacks (MVP)
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
@@ -32,7 +32,14 @@ $mi3.add_Click({
   try {
     $scan = Join-Path $repoTop 'tools\coguardian\scan.ps1'
     if(Test-Path -LiteralPath $scan){
-      Start-Process pwsh -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File',$scan) -WorkingDirectory $repoTop
+      $shaFile = Join-Path $repoTop 'docs\COBUSMIRROR_SHA__LATEST.txt'
+$sha = $null
+try { if(Test-Path -LiteralPath $shaFile){ $sha = (Get-Content -LiteralPath $shaFile -TotalCount 1).Trim() } } catch { }
+if(-not $sha){
+  [System.Windows.Forms.MessageBox]::Show("Missing CoBusMirror SHA. Expected: $shaFile")
+} else {
+  Start-Process pwsh -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File',$scan,'-CoBusMirrorSha',$sha) -WorkingDirectory $repoTop
+}
     } else {
       [System.Windows.Forms.MessageBox]::Show("scan.ps1 not found at: $scan")
     }
