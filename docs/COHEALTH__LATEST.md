@@ -2,7 +2,7 @@
 
 > Shadow-mode CoGuardian v0 (report-only).
 
-- GENERATED_UTC=20260303T143017Z
+- GENERATED_UTC=20260304T045036Z
 - INPUT_COBUSMIRROR_SHA=04bed0636172b425fbb3ca85ced3af69b35aff14
 - INPUT_RAW_BASE=https://raw.githubusercontent.com/CoCivium/CoBusMirror/04bed0636172b425fbb3ca85ced3af69b35aff14
 - RAW_COPRE=https://raw.githubusercontent.com/CoCivium/CoBusMirror/04bed0636172b425fbb3ca85ced3af69b35aff14/docs/COBUS_LITE/canon/COPRE_SUBSESSION__LATEST.md
@@ -117,9 +117,3 @@
 | Sub98 | MISSING/UNFETCHABLE |  |  | https://raw.githubusercontent.com/CoCivium/CoBusMirror/04bed0636172b425fbb3ca85ced3af69b35aff14/docs/COBUS_LITE/bus/subsessions/Sub98__LATEST.md |
 | Sub99 | MISSING/UNFETCHABLE |  |  | https://raw.githubusercontent.com/CoCivium/CoBusMirror/04bed0636172b425fbb3ca85ced3af69b35aff14/docs/COBUS_LITE/bus/subsessions/Sub99__LATEST.md |
 | Sub100 | MISSING/UNFETCHABLE |  |  | https://raw.githubusercontent.com/CoCivium/CoBusMirror/04bed0636172b425fbb3ca85ced3af69b35aff14/docs/COBUS_LITE/bus/subsessions/Sub100__LATEST.md |
-
-<!-- publish_ping 20260303T171011Z -->
-
-
-<!-- publish_ping 20260303T173851Z -->
-
