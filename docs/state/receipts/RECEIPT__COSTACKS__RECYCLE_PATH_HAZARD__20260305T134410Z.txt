@@ -1,0 +1,6 @@
+UTC=20260305T134410Z
+MainSHA_before=6c065ff0c19607c67105bd148980a5701685ca5d
+Hazard=#recycle paths can be discovered first and are not git repos.
+Mitigation=Repo discovery must reject '#recycle' and require '.git' before selection.
+Action=Startup shortcut updated to windowless double-hop to avoid blank console.
+StartupLink=C:\Users\rball\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\CoGuardianTray.lnk
