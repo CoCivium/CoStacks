@@ -1,0 +1,6 @@
+UTC=20260305T184252Z
+BASESHA=5c3aa25e39963269e5d42b06c8099739acfd5aa7
+TRAY=tools\coguardian\tray\CoGuardianTray.ps1
+REPORT=docs/state/reports/REPORT__COGUARDIAN_TRAY__MENU_HANDLER_MAP__20260305T184252Z.txt
+REPORT_SHA256=0F74FEC0EB91C71C539F0CE09B2282CBF36FFAE7C2EEF52405430081E070B408
+Intent=Produce handler-map report only (no behavioral patch) to target exact menu item spawning empty PS7 panel

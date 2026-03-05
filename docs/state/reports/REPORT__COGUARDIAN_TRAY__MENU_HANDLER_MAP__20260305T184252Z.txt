@@ -1,0 +1,457 @@
+UTC=20260305T184252Z
+BASE_SHA=5c3aa25e39963269e5d42b06c8099739acfd5aa7
+TRAY=tools\coguardian\tray\CoGuardianTray.ps1
+HITS_COUNT=24
+
+---- HIT line 5 needle=status.json ----
+    1: # CoGuardianTray.ps1 - minimal visible system-tray surface for CoStacks (MVP)
+    2: ## COGuardianTray.SingletonMutex
+    3: ## COGuardianTray.StatusJsonTelemetry.EARLY
+    4: # EARLY telemetry: must run before any blocking UI/message loop.
+    5: # Writes: %LOCALAPPDATA%\CoCivium\CoGuardian\status.json (and refreshes on timer)
+    6: try {
+    7:   if(-not (Get-Variable -Name CoGuardian_State -Scope Script -ErrorAction SilentlyContinue)){
+    8:     Set-Variable -Name CoGuardian_State -Scope Script -Value "OK"
+    9:   }
+   10:   if(-not (Get-Variable -Name CoGuardian_LastErrorUTC -Scope Script -ErrorAction SilentlyContinue)){
+   11:     Set-Variable -Name CoGuardian_LastErrorUTC -Scope Script -Value ""
+   12:   }
+   13: 
+
+---- HIT line 23 needle=status.json ----
+   15:     param(
+   16:       [string]$State = $script:CoGuardian_State,
+   17:       [string]$LastErrorUTC = $script:CoGuardian_LastErrorUTC
+   18:     )
+   19:     try {
+   20:       $utc = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+   21:       $dir = Join-Path $env:LOCALAPPDATA "CoCivium\CoGuardian"
+   22:       New-Item -ItemType Directory -Force -Path $dir | Out-Null
+   23:       $path = Join-Path $dir "status.json"
+   24:       $obj = [ordered]@{
+   25:         State = $State
+   26:         LastHeartbeatUTC = $utc
+   27:         LastErrorUTC = $LastErrorUTC
+   28:         Host = $env:COMPUTERNAME
+   29:         User = $env:USERNAME
+   30:         PID  = $PID
+   31:         TrayScript = $PSCommandPath
+
+---- HIT line 45 needle=Register-ObjectEvent ----
+   37:   # Write once immediately.
+   38:   Write-CoGuardianStatusJson
+   39: 
+   40:   # Heartbeat timer (doesn't depend on HttpListener, firewall, or URLACL).
+   41:   if(-not (Get-Variable -Name __CoGuardianStatusTimer -Scope Script -ErrorAction SilentlyContinue)){
+   42:     $script:__CoGuardianStatusTimer = New-Object System.Timers.Timer
+   43:     $script:__CoGuardianStatusTimer.Interval = 5000
+   44:     $script:__CoGuardianStatusTimer.AutoReset = $true
+   45:     $null = Register-ObjectEvent -InputObject $script:__CoGuardianStatusTimer -EventName Elapsed -Action { try { Write-CoGuardianStatusJson } catch {} } -ErrorAction SilentlyContinue
+   46:     $script:__CoGuardianStatusTimer.Start()
+   47:   }
+   48: } catch {}
+   49: ## COGuardianTray.LocalStatusAPI_v0
+   50: # --- Minimal diagnostic core (v0) ---
+   51: # Goals:
+   52: #  - Provide a stable heartbeat + tooltip fields for screenshots/diagnosis.
+   53: #  - Provide a tiny localhost status endpoint for future CoGuard extension handshake.
+
+---- HIT line 139 needle=Exit ----
+  131:     $sl,
+  132:     $rl,
+  133:     ($script:CoGuardian.LastHeartbeatUTC ?? 'never'),
+  134:     ($script:CoGuardian.LastErrorUTC ?? 'none'),
+  135:     ($script:CoGuardian.State + (if($script:CoGuardian.Activity){' +ACT'}else{''}))
+  136:   )
+  137: }
+  138: # --- End minimal diagnostic core (v0) ---
+  139: # Single-instance guard: if another tray instance is running, exit immediately.
+  140: # Global namespace reduces duplicates across sessions/users on the same box.
+  141: $__CoGuardianTrayMutexName = 'Global\CoCivium.CoGuardianTray'
+  142: try {
+  143:   $__createdNew = $false
+  144:   $__mutex = [System.Threading.Mutex]::new($true, $__CoGuardianTrayMutexName, [ref]$__createdNew)
+  145:   if(-not $__createdNew){
+  146:     # Another instance already holds the mutex
+  147:     return
+
+---- HIT line 162 needle=NotifyIcon ----
+  154: 
+  155: $repoTop = (git rev-parse --show-toplevel 2>$null)
+  156: if(-not $repoTop){ $repoTop = (Get-Location).Path }
+  157: 
+  158: $icoPath = Join-Path $repoTop 'tools\coguardian\extension_mv3\icons\icon.ico'
+  159: $ico = $null
+  160: try { if(Test-Path -LiteralPath $icoPath){ $ico = New-Object System.Drawing.Icon($icoPath) } } catch { }
+  161: 
+  162: $ni = New-Object System.Windows.Forms.NotifyIcon
+  163: $ni.Text = 'CoGuardian (CoStacks)'
+  164: if($ico){ $ni.Icon = $ico }
+  165: $ni.Visible = $true
+  166: $ni.BalloonTipTitle = 'CoGuardian'
+  167: $ni.BalloonTipText = 'Running. Right-click for actions.'
+  168: $ni.ShowBalloonTip(1500)
+  169: 
+  170: $menu = New-Object System.Windows.Forms.ContextMenuStrip
+
+---- HIT line 167 needle=Click ----
+  159: $ico = $null
+  160: try { if(Test-Path -LiteralPath $icoPath){ $ico = New-Object System.Drawing.Icon($icoPath) } } catch { }
+  161: 
+  162: $ni = New-Object System.Windows.Forms.NotifyIcon
+  163: $ni.Text = 'CoGuardian (CoStacks)'
+  164: if($ico){ $ni.Icon = $ico }
+  165: $ni.Visible = $true
+  166: $ni.BalloonTipTitle = 'CoGuardian'
+  167: $ni.BalloonTipText = 'Running. Right-click for actions.'
+  168: $ni.ShowBalloonTip(1500)
+  169: 
+  170: $menu = New-Object System.Windows.Forms.ContextMenuStrip
+  171: 
+  172: $mi1 = New-Object System.Windows.Forms.ToolStripMenuItem 'Open COHEALTH (GitHub)'
+  173: $mi1.add_Click({ Start-Process 'https://github.com/CoCivium/CoStacks/blob/main/docs/COHEALTH__LATEST.md' })
+  174: [void]$menu.Items.Add($mi1)
+  175: 
+
+---- HIT line 170 needle=ContextMenu ----
+  162: $ni = New-Object System.Windows.Forms.NotifyIcon
+  163: $ni.Text = 'CoGuardian (CoStacks)'
+  164: if($ico){ $ni.Icon = $ico }
+  165: $ni.Visible = $true
+  166: $ni.BalloonTipTitle = 'CoGuardian'
+  167: $ni.BalloonTipText = 'Running. Right-click for actions.'
+  168: $ni.ShowBalloonTip(1500)
+  169: 
+  170: $menu = New-Object System.Windows.Forms.ContextMenuStrip
+  171: 
+  172: $mi1 = New-Object System.Windows.Forms.ToolStripMenuItem 'Open COHEALTH (GitHub)'
+  173: $mi1.add_Click({ Start-Process 'https://github.com/CoCivium/CoStacks/blob/main/docs/COHEALTH__LATEST.md' })
+  174: [void]$menu.Items.Add($mi1)
+  175: 
+  176: $mi2 = New-Object System.Windows.Forms.ToolStripMenuItem 'Open CoStacks Repo (GitHub)'
+  177: $mi2.add_Click({ Start-Process 'https://github.com/CoCivium/CoStacks' })
+  178: [void]$menu.Items.Add($mi2)
+
+---- HIT line 172 needle=MenuItem ----
+  164: if($ico){ $ni.Icon = $ico }
+  165: $ni.Visible = $true
+  166: $ni.BalloonTipTitle = 'CoGuardian'
+  167: $ni.BalloonTipText = 'Running. Right-click for actions.'
+  168: $ni.ShowBalloonTip(1500)
+  169: 
+  170: $menu = New-Object System.Windows.Forms.ContextMenuStrip
+  171: 
+  172: $mi1 = New-Object System.Windows.Forms.ToolStripMenuItem 'Open COHEALTH (GitHub)'
+  173: $mi1.add_Click({ Start-Process 'https://github.com/CoCivium/CoStacks/blob/main/docs/COHEALTH__LATEST.md' })
+  174: [void]$menu.Items.Add($mi1)
+  175: 
+  176: $mi2 = New-Object System.Windows.Forms.ToolStripMenuItem 'Open CoStacks Repo (GitHub)'
+  177: $mi2.add_Click({ Start-Process 'https://github.com/CoCivium/CoStacks' })
+  178: [void]$menu.Items.Add($mi2)
+  179: 
+  180: $mi3 = New-Object System.Windows.Forms.ToolStripMenuItem 'Run CoGuardian scan.ps1 (local)'
+
+---- HIT line 173 needle=Click ----
+  165: $ni.Visible = $true
+  166: $ni.BalloonTipTitle = 'CoGuardian'
+  167: $ni.BalloonTipText = 'Running. Right-click for actions.'
+  168: $ni.ShowBalloonTip(1500)
+  169: 
+  170: $menu = New-Object System.Windows.Forms.ContextMenuStrip
+  171: 
+  172: $mi1 = New-Object System.Windows.Forms.ToolStripMenuItem 'Open COHEALTH (GitHub)'
+  173: $mi1.add_Click({ Start-Process 'https://github.com/CoCivium/CoStacks/blob/main/docs/COHEALTH__LATEST.md' })
+  174: [void]$menu.Items.Add($mi1)
+  175: 
+  176: $mi2 = New-Object System.Windows.Forms.ToolStripMenuItem 'Open CoStacks Repo (GitHub)'
+  177: $mi2.add_Click({ Start-Process 'https://github.com/CoCivium/CoStacks' })
+  178: [void]$menu.Items.Add($mi2)
+  179: 
+  180: $mi3 = New-Object System.Windows.Forms.ToolStripMenuItem 'Run CoGuardian scan.ps1 (local)'
+  181: $mi3.add_Click({
+
+---- HIT line 176 needle=MenuItem ----
+  168: $ni.ShowBalloonTip(1500)
+  169: 
+  170: $menu = New-Object System.Windows.Forms.ContextMenuStrip
+  171: 
+  172: $mi1 = New-Object System.Windows.Forms.ToolStripMenuItem 'Open COHEALTH (GitHub)'
+  173: $mi1.add_Click({ Start-Process 'https://github.com/CoCivium/CoStacks/blob/main/docs/COHEALTH__LATEST.md' })
+  174: [void]$menu.Items.Add($mi1)
+  175: 
+  176: $mi2 = New-Object System.Windows.Forms.ToolStripMenuItem 'Open CoStacks Repo (GitHub)'
+  177: $mi2.add_Click({ Start-Process 'https://github.com/CoCivium/CoStacks' })
+  178: [void]$menu.Items.Add($mi2)
+  179: 
+  180: $mi3 = New-Object System.Windows.Forms.ToolStripMenuItem 'Run CoGuardian scan.ps1 (local)'
+  181: $mi3.add_Click({
+  182:   try {
+  183:     $scan = Join-Path $repoTop 'tools\coguardian\scan.ps1'
+  184:     if(Test-Path -LiteralPath $scan){
+
+---- HIT line 177 needle=Click ----
+  169: 
+  170: $menu = New-Object System.Windows.Forms.ContextMenuStrip
+  171: 
+  172: $mi1 = New-Object System.Windows.Forms.ToolStripMenuItem 'Open COHEALTH (GitHub)'
+  173: $mi1.add_Click({ Start-Process 'https://github.com/CoCivium/CoStacks/blob/main/docs/COHEALTH__LATEST.md' })
+  174: [void]$menu.Items.Add($mi1)
+  175: 
+  176: $mi2 = New-Object System.Windows.Forms.ToolStripMenuItem 'Open CoStacks Repo (GitHub)'
+  177: $mi2.add_Click({ Start-Process 'https://github.com/CoCivium/CoStacks' })
+  178: [void]$menu.Items.Add($mi2)
+  179: 
+  180: $mi3 = New-Object System.Windows.Forms.ToolStripMenuItem 'Run CoGuardian scan.ps1 (local)'
+  181: $mi3.add_Click({
+  182:   try {
+  183:     $scan = Join-Path $repoTop 'tools\coguardian\scan.ps1'
+  184:     if(Test-Path -LiteralPath $scan){
+  185:       $shaFile = Join-Path $repoTop 'docs\COBUSMIRROR_SHA__LATEST.txt'
+
+---- HIT line 180 needle=MenuItem ----
+  172: $mi1 = New-Object System.Windows.Forms.ToolStripMenuItem 'Open COHEALTH (GitHub)'
+  173: $mi1.add_Click({ Start-Process 'https://github.com/CoCivium/CoStacks/blob/main/docs/COHEALTH__LATEST.md' })
+  174: [void]$menu.Items.Add($mi1)
+  175: 
+  176: $mi2 = New-Object System.Windows.Forms.ToolStripMenuItem 'Open CoStacks Repo (GitHub)'
+  177: $mi2.add_Click({ Start-Process 'https://github.com/CoCivium/CoStacks' })
+  178: [void]$menu.Items.Add($mi2)
+  179: 
+  180: $mi3 = New-Object System.Windows.Forms.ToolStripMenuItem 'Run CoGuardian scan.ps1 (local)'
+  181: $mi3.add_Click({
+  182:   try {
+  183:     $scan = Join-Path $repoTop 'tools\coguardian\scan.ps1'
+  184:     if(Test-Path -LiteralPath $scan){
+  185:       $shaFile = Join-Path $repoTop 'docs\COBUSMIRROR_SHA__LATEST.txt'
+  186: $sha = $null
+  187: try { if(Test-Path -LiteralPath $shaFile){ $sha = (Get-Content -LiteralPath $shaFile -TotalCount 1).Trim() } } catch { }
+  188: if(-not $sha){
+
+---- HIT line 181 needle=Click ----
+  173: $mi1.add_Click({ Start-Process 'https://github.com/CoCivium/CoStacks/blob/main/docs/COHEALTH__LATEST.md' })
+  174: [void]$menu.Items.Add($mi1)
+  175: 
+  176: $mi2 = New-Object System.Windows.Forms.ToolStripMenuItem 'Open CoStacks Repo (GitHub)'
+  177: $mi2.add_Click({ Start-Process 'https://github.com/CoCivium/CoStacks' })
+  178: [void]$menu.Items.Add($mi2)
+  179: 
+  180: $mi3 = New-Object System.Windows.Forms.ToolStripMenuItem 'Run CoGuardian scan.ps1 (local)'
+  181: $mi3.add_Click({
+  182:   try {
+  183:     $scan = Join-Path $repoTop 'tools\coguardian\scan.ps1'
+  184:     if(Test-Path -LiteralPath $scan){
+  185:       $shaFile = Join-Path $repoTop 'docs\COBUSMIRROR_SHA__LATEST.txt'
+  186: $sha = $null
+  187: try { if(Test-Path -LiteralPath $shaFile){ $sha = (Get-Content -LiteralPath $shaFile -TotalCount 1).Trim() } } catch { }
+  188: if(-not $sha){
+  189:   [System.Windows.Forms.MessageBox]::Show("Missing CoBusMirror SHA. Expected: $shaFile")
+
+---- HIT line 183 needle=scan ----
+  175: 
+  176: $mi2 = New-Object System.Windows.Forms.ToolStripMenuItem 'Open CoStacks Repo (GitHub)'
+  177: $mi2.add_Click({ Start-Process 'https://github.com/CoCivium/CoStacks' })
+  178: [void]$menu.Items.Add($mi2)
+  179: 
+  180: $mi3 = New-Object System.Windows.Forms.ToolStripMenuItem 'Run CoGuardian scan.ps1 (local)'
+  181: $mi3.add_Click({
+  182:   try {
+  183:     $scan = Join-Path $repoTop 'tools\coguardian\scan.ps1'
+  184:     if(Test-Path -LiteralPath $scan){
+  185:       $shaFile = Join-Path $repoTop 'docs\COBUSMIRROR_SHA__LATEST.txt'
+  186: $sha = $null
+  187: try { if(Test-Path -LiteralPath $shaFile){ $sha = (Get-Content -LiteralPath $shaFile -TotalCount 1).Trim() } } catch { }
+  188: if(-not $sha){
+  189:   [System.Windows.Forms.MessageBox]::Show("Missing CoBusMirror SHA. Expected: $shaFile")
+  190: } else {
+  191:   Start-Process pwsh -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File',$scan,'-CoBusMirrorSha',$sha) -WorkingDirectory $repoTop
+
+---- HIT line 184 needle=scan ----
+  176: $mi2 = New-Object System.Windows.Forms.ToolStripMenuItem 'Open CoStacks Repo (GitHub)'
+  177: $mi2.add_Click({ Start-Process 'https://github.com/CoCivium/CoStacks' })
+  178: [void]$menu.Items.Add($mi2)
+  179: 
+  180: $mi3 = New-Object System.Windows.Forms.ToolStripMenuItem 'Run CoGuardian scan.ps1 (local)'
+  181: $mi3.add_Click({
+  182:   try {
+  183:     $scan = Join-Path $repoTop 'tools\coguardian\scan.ps1'
+  184:     if(Test-Path -LiteralPath $scan){
+  185:       $shaFile = Join-Path $repoTop 'docs\COBUSMIRROR_SHA__LATEST.txt'
+  186: $sha = $null
+  187: try { if(Test-Path -LiteralPath $shaFile){ $sha = (Get-Content -LiteralPath $shaFile -TotalCount 1).Trim() } } catch { }
+  188: if(-not $sha){
+  189:   [System.Windows.Forms.MessageBox]::Show("Missing CoBusMirror SHA. Expected: $shaFile")
+  190: } else {
+  191:   Start-Process pwsh -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File',$scan,'-CoBusMirrorSha',$sha) -WorkingDirectory $repoTop
+  192: }
+
+---- HIT line 191 needle=scan ----
+  183:     $scan = Join-Path $repoTop 'tools\coguardian\scan.ps1'
+  184:     if(Test-Path -LiteralPath $scan){
+  185:       $shaFile = Join-Path $repoTop 'docs\COBUSMIRROR_SHA__LATEST.txt'
+  186: $sha = $null
+  187: try { if(Test-Path -LiteralPath $shaFile){ $sha = (Get-Content -LiteralPath $shaFile -TotalCount 1).Trim() } } catch { }
+  188: if(-not $sha){
+  189:   [System.Windows.Forms.MessageBox]::Show("Missing CoBusMirror SHA. Expected: $shaFile")
+  190: } else {
+  191:   Start-Process pwsh -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File',$scan,'-CoBusMirrorSha',$sha) -WorkingDirectory $repoTop
+  192: }
+  193:     } else {
+  194:       [System.Windows.Forms.MessageBox]::Show("scan.ps1 not found at: $scan")
+  195:     }
+  196:   } catch {
+  197:     [System.Windows.Forms.MessageBox]::Show("Error: " + $_.Exception.Message)
+  198:   }
+  199: })
+
+---- HIT line 194 needle=scan ----
+  186: $sha = $null
+  187: try { if(Test-Path -LiteralPath $shaFile){ $sha = (Get-Content -LiteralPath $shaFile -TotalCount 1).Trim() } } catch { }
+  188: if(-not $sha){
+  189:   [System.Windows.Forms.MessageBox]::Show("Missing CoBusMirror SHA. Expected: $shaFile")
+  190: } else {
+  191:   Start-Process pwsh -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File',$scan,'-CoBusMirrorSha',$sha) -WorkingDirectory $repoTop
+  192: }
+  193:     } else {
+  194:       [System.Windows.Forms.MessageBox]::Show("scan.ps1 not found at: $scan")
+  195:     }
+  196:   } catch {
+  197:     [System.Windows.Forms.MessageBox]::Show("Error: " + $_.Exception.Message)
+  198:   }
+  199: })
+  200: [void]$menu.Items.Add($mi3)
+  201: 
+  202: [void]$menu.Items.Add((New-Object System.Windows.Forms.ToolStripSeparator))
+
+---- HIT line 204 needle=MenuItem ----
+  196:   } catch {
+  197:     [System.Windows.Forms.MessageBox]::Show("Error: " + $_.Exception.Message)
+  198:   }
+  199: })
+  200: [void]$menu.Items.Add($mi3)
+  201: 
+  202: [void]$menu.Items.Add((New-Object System.Windows.Forms.ToolStripSeparator))
+  203: 
+  204: $miX = New-Object System.Windows.Forms.ToolStripMenuItem 'Exit CoGuardian'
+  205: $miX.add_Click({
+  206:   $ni.Visible = $false
+  207:   $ni.Dispose()
+  208:   [System.Windows.Forms.Application]::Exit()
+  209: })
+  210: [void]$menu.Items.Add($miX)
+  211: 
+  212: $ni.ContextMenuStrip = $menu
+
+---- HIT line 205 needle=Click ----
+  197:     [System.Windows.Forms.MessageBox]::Show("Error: " + $_.Exception.Message)
+  198:   }
+  199: })
+  200: [void]$menu.Items.Add($mi3)
+  201: 
+  202: [void]$menu.Items.Add((New-Object System.Windows.Forms.ToolStripSeparator))
+  203: 
+  204: $miX = New-Object System.Windows.Forms.ToolStripMenuItem 'Exit CoGuardian'
+  205: $miX.add_Click({
+  206:   $ni.Visible = $false
+  207:   $ni.Dispose()
+  208:   [System.Windows.Forms.Application]::Exit()
+  209: })
+  210: [void]$menu.Items.Add($miX)
+  211: 
+  212: $ni.ContextMenuStrip = $menu
+  213: [System.Windows.Forms.Application]::Run()
+
+---- HIT line 208 needle=Exit ----
+  200: [void]$menu.Items.Add($mi3)
+  201: 
+  202: [void]$menu.Items.Add((New-Object System.Windows.Forms.ToolStripSeparator))
+  203: 
+  204: $miX = New-Object System.Windows.Forms.ToolStripMenuItem 'Exit CoGuardian'
+  205: $miX.add_Click({
+  206:   $ni.Visible = $false
+  207:   $ni.Dispose()
+  208:   [System.Windows.Forms.Application]::Exit()
+  209: })
+  210: [void]$menu.Items.Add($miX)
+  211: 
+  212: $ni.ContextMenuStrip = $menu
+  213: [System.Windows.Forms.Application]::Run()
+  214: ## COGuardianTray.HeartbeatTimer_v0
+  215: try {
+  216:   # Start listener first (optional)
+
+---- HIT line 212 needle=ContextMenu ----
+  204: $miX = New-Object System.Windows.Forms.ToolStripMenuItem 'Exit CoGuardian'
+  205: $miX.add_Click({
+  206:   $ni.Visible = $false
+  207:   $ni.Dispose()
+  208:   [System.Windows.Forms.Application]::Exit()
+  209: })
+  210: [void]$menu.Items.Add($miX)
+  211: 
+  212: $ni.ContextMenuStrip = $menu
+  213: [System.Windows.Forms.Application]::Run()
+  214: ## COGuardianTray.HeartbeatTimer_v0
+  215: try {
+  216:   # Start listener first (optional)
+  217:   if(-not $script:__CoGListener){ $script:__CoGListener = Start-CoGStatusListener }
+  218:   # Heartbeat timer
+  219:   if(-not $script:__CoGHeartbeatTimer){
+  220:     $script:__CoGHeartbeatTimer = New-Object System.Timers.Timer
+
+---- HIT line 232 needle=status.json ----
+  224:     $script:__CoGHeartbeatTimer.Start()
+  225:   }
+  226: } catch {
+  227:   try { Touch-Error } catch {}
+  228: }
+  229: 
+  230: 
+  231: ## COGuardianTray.StatusJsonTelemetry
+  232: # Telemetry: write status.json locally so diagnostics never depend on HttpListener/URLACL/firewall.
+  233: # Location: %LOCALAPPDATA%\CoCivium\CoGuardian\status.json
+  234: try {
+  235:   if(-not (Get-Variable -Name CoGuardian_State -Scope Script -ErrorAction SilentlyContinue)){
+  236:     Set-Variable -Name CoGuardian_State -Scope Script -Value "OK"
+  237:   }
+  238:   if(-not (Get-Variable -Name CoGuardian_LastErrorUTC -Scope Script -ErrorAction SilentlyContinue)){
+  239:     Set-Variable -Name CoGuardian_LastErrorUTC -Scope Script -Value ""
+  240:   }
+
+---- HIT line 233 needle=status.json ----
+  225:   }
+  226: } catch {
+  227:   try { Touch-Error } catch {}
+  228: }
+  229: 
+  230: 
+  231: ## COGuardianTray.StatusJsonTelemetry
+  232: # Telemetry: write status.json locally so diagnostics never depend on HttpListener/URLACL/firewall.
+  233: # Location: %LOCALAPPDATA%\CoCivium\CoGuardian\status.json
+  234: try {
+  235:   if(-not (Get-Variable -Name CoGuardian_State -Scope Script -ErrorAction SilentlyContinue)){
+  236:     Set-Variable -Name CoGuardian_State -Scope Script -Value "OK"
+  237:   }
+  238:   if(-not (Get-Variable -Name CoGuardian_LastErrorUTC -Scope Script -ErrorAction SilentlyContinue)){
+  239:     Set-Variable -Name CoGuardian_LastErrorUTC -Scope Script -Value ""
+  240:   }
+  241: 
+
+---- HIT line 251 needle=status.json ----
+  243:     param(
+  244:       [string]$State = $script:CoGuardian_State,
+  245:       [string]$LastErrorUTC = $script:CoGuardian_LastErrorUTC
+  246:     )
+  247:     try {
+  248:       $utc = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+  249:       $dir = Join-Path $env:LOCALAPPDATA "CoCivium\CoGuardian"
+  250:       New-Item -ItemType Directory -Force -Path $dir | Out-Null
+  251:       $path = Join-Path $dir "status.json"
+  252:       $obj = [ordered]@{
+  253:         State = $State
+  254:         LastHeartbeatUTC = $utc
+  255:         LastErrorUTC = $LastErrorUTC
+  256:         Host = $env:COMPUTERNAME
+  257:         User = $env:USERNAME
+  258:         PID  = $PID
+  259:         TrayScript = "$PSCommandPath"
+
