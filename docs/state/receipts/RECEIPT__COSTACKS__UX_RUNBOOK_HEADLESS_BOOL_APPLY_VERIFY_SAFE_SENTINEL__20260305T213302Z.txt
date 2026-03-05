@@ -1,0 +1,7 @@
+UTC=20260305T213302Z
+BASESHA=310f680f315bf4ea2f22957b6ae1910ebe007d65
+Changed=tools\costacks\runbooks\Invoke-CoStacksRunbook.ps1
+Changed2=tools\costacks\runbooks\Write-CoPong.ps1
+Changed3=tools\costacks\runbooks\runbook.ux.ps7.ps1
+Fix=Eliminate interactive prompts (Write-CoPong + UX Context). Enforce bool Apply/Verify. Runbooks call Write-CoPong FUNCTION, never pipeline-invoke .ps1 file.
+Sentinel=SAFE_TO_COPONG_VIOLET

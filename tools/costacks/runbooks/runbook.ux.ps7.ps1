@@ -1,56 +1,55 @@
-param([Parameter(Mandatory=$true)]$Context)
+<# runbook.ux.ps7 (canonical, headless)
+   Goal: make pwsh/CLI UX feel CoCivium (prompt, cursor, title), WITHOUT ever prompting for input.
+#>
 
-Set-StrictMode -Version Latest
+function Invoke-Runbook {
+  [CmdletBinding()]
+  param(
+    [Parameter(Mandatory=$true)][string]$RepoRoot,
+    [Parameter(Mandatory=$false)][bool]$Apply = $false,
+    [Parameter(Mandatory=$false)][bool]$Verify = $false,
+    [Parameter(Mandatory=$false)][string]$Context
+  )
 
-# COSTACKS_PATCH__UX_RUNBOOK_CONTEXT_DEFAULT__V2
-if([string]::IsNullOrWhiteSpace($Context)){
-  $Context = $env:COSTACKS_CONTEXT
-  if([string]::IsNullOrWhiteSpace($Context)){ $Context = 'CoStacks.UX.PS7' }
-}
-$ErrorActionPreference='Stop'
-$ProgressPreference='SilentlyContinue'
+  Set-StrictMode -Version Latest
+  $ErrorActionPreference='Stop'
+  $ProgressPreference='SilentlyContinue'
 
-function Dot([string]$m){ Write-Host ("[{0}] {1}" -f (Get-Date).ToUniversalTime().ToString("HH:mm:ssZ"), $m) }
-function Fail([string]$m){ throw "FAIL-CLOSED: $m" }
-
-Dot "Runbook: ux.ps7 (safe, opt-in)"
-
-if(-not $Context.Apply){
-  Dot "Apply not set; nothing to do."
-  return
-}
-
-# Safe UX: set prompt function via CurrentUser profile only; no registry hacks.
-$prof = $PROFILE.CurrentUserAllHosts
-$dir = Split-Path -Parent $prof
-New-Item -ItemType Directory -Force -Path $dir | Out-Null
-
-$marker = "# COGUARDIAN_PATCH__UX_PS7_PROMPT__V1"
-$existing = ""
-if(Test-Path -LiteralPath $prof){ $existing = Get-Content -LiteralPath $prof -Raw -Encoding UTF8 }
-
-if($existing -match [regex]::Escape($marker)){
-  Dot "Profile already patched: $prof"
-  return
-}
-
-$patch = @"
-$marker
-function global:prompt {
-  try {
-    \$utc = (Get-Date).ToUniversalTime().ToString('HH:mm:ssZ')
-    \$p = (Get-Location).Path
-    # Yellow prompt + explicit PS7 marker
-    Write-Host ("[`$utc] [PS7] " ) -NoNewline -ForegroundColor Yellow
-    Write-Host (\$p) -NoNewline -ForegroundColor Yellow
-    return "`n> "
-  } catch {
-    return "PS7> "
+  if([string]::IsNullOrWhiteSpace($Context)){
+    $Context = $env:COSTACKS_CONTEXT
+    if([string]::IsNullOrWhiteSpace($Context)){ $Context = "CoStacks.UX.PS7" }
   }
+
+  Write-Host ("[{0}] Runbook: ux.ps7 (headless) Context={1} Apply={2} Verify={3}" -f (Get-Date).ToUniversalTime().ToString('HH:mm:ssZ'), $Context, $Apply, $Verify)
+
+  # Apply: minimal, reversible UX signals (NO prompts)
+  if($Apply){
+    # Title hint (works in most terminals)
+    try { $host.UI.RawUI.WindowTitle = ("PS7 | {0}" -f $Context) } catch {}
+
+    # Prompt function hint (only affects current session unless user chooses to persist)
+    # We avoid auto-persisting to profile in this runbook.
+    try {
+      function global:prompt {
+        $p = (Get-Location).Path
+        return ("`e[93mPS7`e[0m `e[90m{0}`e[0m> " -f $p)
+      }
+    } catch {}
+  }
+
+  # Verify: print a short status line (still headless)
+  if($Verify){
+    try {
+      $pv = $PSVersionTable.PSVersion.ToString()
+      Write-Host ("Verify: PSVersion={0} Host={1}" -f $pv, $Host.Name)
+    } catch {}
+  }
+
+  # If available, emit a violet receipt using the FUNCTION (not the .ps1 file name)
+  try {
+    if(Get-Command Write-CoPong -ErrorAction SilentlyContinue){
+      $utc=(Get-Date).ToUniversalTime().ToString("yyyyMMddTHHmmssZ")
+      Write-CoPong -From "CoStacks" -Utc $utc -State "done" -Intent "UX_PS7_RUNBOOK_APPLIED_OR_VERIFIED" -Note ("Context=" + $Context)
+    }
+  } catch {}
 }
-"@
-
-Set-Content -LiteralPath $prof -Encoding UTF8 -Value ($existing + "`r`n" + $patch + "`r`n")
-Dot "Patched PS7 prompt in: $prof"
-Dot "NOTE: cursor shape is terminal-controlled (Windows Terminal). We can ship a WT fragment next if you want."
-
