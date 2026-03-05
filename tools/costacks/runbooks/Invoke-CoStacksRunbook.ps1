@@ -10,6 +10,9 @@ param(
 )
 
 Set-StrictMode -Version Latest
+
+# COSTACKS_PATCH__ENGINE_SAFE_COPONG_WRITER__V1
+. (Join-Path $PSScriptRoot 'Write-CoPong.ps1')
 $ErrorActionPreference='Stop'
 $ProgressPreference='SilentlyContinue'
 
@@ -45,4 +48,5 @@ if($rbCmd.Parameters.ContainsKey("Context")){
   Invoke-Runbook -RepoRoot $RepoRoot -Apply:$Apply.IsPresent -Verify:$Verify.IsPresent
 }
 Dot "READY"
+
 

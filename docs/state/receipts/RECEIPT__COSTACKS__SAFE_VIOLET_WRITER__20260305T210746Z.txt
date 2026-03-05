@@ -1,0 +1,5 @@
+UTC=20260305T210746Z
+BASESHA=6bb017df9e024cf92c37fc185ea206a6a2040477
+Added=tools\costacks\runbooks\Write-CoPong.ps1
+Changed=tools\costacks\runbooks\Invoke-CoStacksRunbook.ps1
+Fix=Prevent '$' interpolation footguns in violet lines; centralized writer helper.
