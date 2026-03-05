@@ -7,9 +7,8 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference='Stop'
 
 function Fail([string]$m){ throw "FAIL: $m" }
-
-$RepoRoot = (Resolve-Path -LiteralPath $RepoRoot).Path
-$tray = (Resolve-Path -LiteralPath (Join-Path $RepoRoot 'tools\coguardian\tray\CoGuardianTray.ps1')).Path
+$RepoRoot = (Resolve-Path -LiteralPath $RepoRoot).ProviderPath
+$tray = (Resolve-Path -LiteralPath (Join-Path $RepoRoot 'tools\coguardian\tray\CoGuardianTray.ps1')).ProviderPath
 if(-not (Test-Path -LiteralPath $tray)){ Fail "Missing tray: $tray" }
 
 $pwsh = (Get-Command pwsh -ErrorAction Stop).Source
@@ -41,5 +40,6 @@ Write-Host "OK Installed Startup shortcut:"
 Write-Host "  $lnkPath"
 Write-Host "Test now by launching the shortcut (Explorer -> Startup folder) or run:"
 Write-Host "  `"$pwsh`" $argStr"
+
 
 
