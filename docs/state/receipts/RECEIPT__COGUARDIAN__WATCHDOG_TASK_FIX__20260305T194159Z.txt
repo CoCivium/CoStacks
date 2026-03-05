@@ -1,0 +1,7 @@
+UTC=20260305T194159Z
+BASESHA=b64eeb51bf709ba06badf5485c55c964ee10358d
+Installer=tools\coguardian\watchdog\Install-CoGuardianWatchdogTask.ps1
+Verifier=tools\coguardian\watchdog\Verify-CoGuardianWatchdogTask.ps1
+TaskName=CoCivium.CoGuardian.Watchdog
+Fix=Use Daily trigger + repeat every 1m for 1 day (avoids invalid infinite duration XML).
+Intent=No false DONE; verify task is truly registered and scheduled.

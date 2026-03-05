@@ -16,13 +16,19 @@ if($pwsh){
   $args = "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$script`""
 }
 
-# Every 1 minute, indefinitely
-$action  = New-ScheduledTaskAction -Execute $exe -Argument $args
-$trigger = New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(1) -RepetitionInterval (New-TimeSpan -Minutes 1) -RepetitionDuration ([TimeSpan]::MaxValue)
+# Trigger: start ~1 minute from now, repeat every 1 minute for 1 day; also re-triggers daily
+$start = (Get-Date).AddMinutes(1)
+
+$action   = New-ScheduledTaskAction -Execute $exe -Argument $args
+$trigger  = New-ScheduledTaskTrigger -Daily -At $start
+$trigger.RepetitionInterval = New-TimeSpan -Minutes 1
+$trigger.RepetitionDuration = New-TimeSpan -Days 1
+
 $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -MultipleInstances IgnoreNew
 
-# Per-user task
 try { Unregister-ScheduledTask -TaskName $taskName -Confirm:$false -ErrorAction SilentlyContinue } catch {}
+
+# IMPORTANT: if this throws, caller should fail (no “Installed” lies)
 Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger -Settings $settings -Description "CoGuardian watchdog: restarts tray/bootstrap if heartbeat stale or tray missing." | Out-Null
 
 Write-Host "Installed scheduled task: $taskName"
