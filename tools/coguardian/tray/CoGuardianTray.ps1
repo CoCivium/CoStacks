@@ -180,3 +180,43 @@ try {
 } catch {
   try { Touch-Error } catch {}
 }
+
+
+## COGuardianTray.StatusJsonTelemetry
+# Telemetry: write status.json locally so diagnostics never depend on HttpListener/URLACL/firewall.
+# Location: %LOCALAPPDATA%\CoCivium\CoGuardian\status.json
+try {
+  if(-not (Get-Variable -Name CoGuardian_State -Scope Script -ErrorAction SilentlyContinue)){
+    Set-Variable -Name CoGuardian_State -Scope Script -Value "OK"
+  }
+  if(-not (Get-Variable -Name CoGuardian_LastErrorUTC -Scope Script -ErrorAction SilentlyContinue)){
+    Set-Variable -Name CoGuardian_LastErrorUTC -Scope Script -Value ""
+  }
+
+  function Write-CoGuardianStatusJson {
+    param(
+      [string]$State = $script:CoGuardian_State,
+      [string]$LastErrorUTC = $script:CoGuardian_LastErrorUTC
+    )
+    try {
+      $utc = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+      $dir = Join-Path $env:LOCALAPPDATA "CoCivium\CoGuardian"
+      New-Item -ItemType Directory -Force -Path $dir | Out-Null
+      $path = Join-Path $dir "status.json"
+      $obj = [ordered]@{
+        State = $State
+        LastHeartbeatUTC = $utc
+        LastErrorUTC = $LastErrorUTC
+        Host = $env:COMPUTERNAME
+        User = $env:USERNAME
+        PID  = $PID
+        TrayScript = "$PSCommandPath"
+      }
+      ($obj | ConvertTo-Json -Depth 3) | Set-Content -Encoding UTF8 -LiteralPath $path
+    } catch {}
+  }
+
+  # Best-effort: call once immediately (then again from heartbeat if you add one later).
+  Write-CoGuardianStatusJson
+} catch {}
+

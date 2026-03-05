@@ -1,0 +1,6 @@
+UTC=20260305T165622Z
+BASE_SHA=82e1ac32ccf4c5468ec12cd0d1e23442d1dc0cf4
+Action=Add local status.json telemetry + Get-CoGuardianStatus helper
+Tray=tools\coguardian\tray\CoGuardianTray.ps1
+Helper=tools\coguardian\tray\Get-CoGuardianStatus.ps1
+StatusPath=%LOCALAPPDATA%\CoCivium\CoGuardian\status.json
