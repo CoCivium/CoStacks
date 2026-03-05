@@ -1,0 +1,6 @@
+UTC=20260305T185548Z
+BASESHA=087fa63279befde1e09a4f440ccf02c6fb0144b6
+TRAY=tools\coguardian\tray\CoGuardianTray.ps1
+Helpers=tools/coguardian/tray/Get-CoGuardianTrayTelemetry.ps1 | tools/coguardian/tray/Clear-CoGuardianTrayTelemetry.ps1
+TelemetryLog=%LOCALAPPDATA%\CoCivium\CoGuardian\tray_telemetry.log
+Intent=Automate diagnosis: log CLICK:<text> + SPAWN_LINE:<Start-Process...> for the 5-second blank PS7 panel offender.

@@ -1,8 +1,26 @@
+# COGUARDIAN_PATCH__TRAY_TELEMETRY__V2
+# Telemetry log: %LOCALAPPDATA%\CoCivium\CoGuardian\tray_telemetry.log
+function CoGuardian_TelemetryPath {
+  try { return (Join-Path $env:LOCALAPPDATA 'CoCivium\CoGuardian\tray_telemetry.log') } catch { return $null }
+}
+function CoGuardian_Log {
+  param([string]$Msg)
+  try {
+    $p = CoGuardian_TelemetryPath
+    if(-not $p){ return }
+    $dir = Split-Path $p -Parent
+    if(-not (Test-Path -LiteralPath $dir)){ New-Item -ItemType Directory -Force -Path $dir | Out-Null }
+    $ts = (Get-Date).ToUniversalTime().ToString('o')
+    Add-Content -LiteralPath $p -Encoding UTF8 -Value ("[{0}] {1}" -f $ts, $Msg)
+  } catch { }
+}
+
 # COGUARDIAN_PATCH__NO_CONSOLE_SCANMENU__V1
 function CoGuardian_OpenLocalFolder {
   try {
     $p = Join-Path $env:LOCALAPPDATA 'CoCivium\CoGuardian'
     if(-not (Test-Path -LiteralPath $p)){ New-Item -ItemType Directory -Force -Path $p | Out-Null }
+    CoGuardian_Log ("SPAWN_LINE: Start-Process explorer.exe -ArgumentList @(""$p"") | Out-Null".Trim());
     Start-Process explorer.exe -ArgumentList @(""$p"") | Out-Null
   } catch {
     try { [System.Windows.Forms.MessageBox]::Show("CoGuardian: couldn't open local folder. Path: $env:LOCALAPPDATA\CoCivium\CoGuardian","CoGuardian") | Out-Null } catch {}
@@ -181,15 +199,15 @@ $ni.ShowBalloonTip(1500)
 $menu = New-Object System.Windows.Forms.ContextMenuStrip
 
 $mi1 = New-Object System.Windows.Forms.ToolStripMenuItem 'Open COHEALTH (GitHub)'
-$mi1.add_Click({ Start-Process 'https://github.com/CoCivium/CoStacks/blob/main/docs/COHEALTH__LATEST.md' })
+$mi1.add_Click({ try{ CoGuardian_Log ("CLICK:" + ($this.Text)) } catch { CoGuardian_Log "CLICK:(unknown)" };  Start-Process 'https://github.com/CoCivium/CoStacks/blob/main/docs/COHEALTH__LATEST.md' })
 [void]$menu.Items.Add($mi1)
 
 $mi2 = New-Object System.Windows.Forms.ToolStripMenuItem 'Open CoStacks Repo (GitHub)'
-$mi2.add_Click({ Start-Process 'https://github.com/CoCivium/CoStacks' })
+$mi2.add_Click({ try{ CoGuardian_Log ("CLICK:" + ($this.Text)) } catch { CoGuardian_Log "CLICK:(unknown)" };  Start-Process 'https://github.com/CoCivium/CoStacks' })
 [void]$menu.Items.Add($mi2)
 
 $mi3 = New-Object System.Windows.Forms.ToolStripMenuItem 'Open CoGuardian folder (local)'
-$mi3.add_Click({
+$mi3.add_Click({ try{ CoGuardian_Log ("CLICK:" + ($this.Text)) } catch { CoGuardian_Log "CLICK:(unknown)" }; 
   try {
     $scan = Join-Path $repoTop 'tools\coguardian\scan.ps1'
     if(Test-Path -LiteralPath $scan){
@@ -199,6 +217,7 @@ try { if(Test-Path -LiteralPath $shaFile){ $sha = (Get-Content -LiteralPath $sha
 if(-not $sha){
   [System.Windows.Forms.MessageBox]::Show("Missing CoBusMirror SHA. Expected: $shaFile")
 } else {
+  CoGuardian_Log ("SPAWN_LINE: Start-Process pwsh -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File',$scan,'-CoBusMirrorSha',$sha) -WorkingDirectory $repoTop".Trim());
   Start-Process pwsh -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File',$scan,'-CoBusMirrorSha',$sha) -WorkingDirectory $repoTop
 }
     } else {
@@ -213,7 +232,7 @@ if(-not $sha){
 [void]$menu.Items.Add((New-Object System.Windows.Forms.ToolStripSeparator))
 
 $miX = New-Object System.Windows.Forms.ToolStripMenuItem 'Exit CoGuardian'
-$miX.add_Click({
+$miX.add_Click({ try{ CoGuardian_Log ("CLICK:" + ($this.Text)) } catch { CoGuardian_Log "CLICK:(unknown)" }; 
   $ni.Visible = $false
   $ni.Dispose()
   [System.Windows.Forms.Application]::Exit()
@@ -276,5 +295,6 @@ try {
   # Best-effort: call once immediately (then again from heartbeat if you add one later).
   Write-CoGuardianStatusJson
 } catch {}
+
 
 
