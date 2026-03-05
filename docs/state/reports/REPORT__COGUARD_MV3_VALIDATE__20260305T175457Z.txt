@@ -1,0 +1,13 @@
+UTC=20260305T175457Z
+BASE_SHA=c522923015b9dedd6df511e730afd5c3997ecfbb
+ExtensionFolder=\\Server\CoCiviumAdmin\CoVault\CoCiviumAdmin\_Work\repos\CoStacks\tools\coguardian\extension_mv3
+Manifest=\\Server\CoCiviumAdmin\CoVault\CoCiviumAdmin\_Work\repos\CoStacks\tools\coguardian\extension_mv3\manifest.json
+Manifest_SHA256=81C12D61D750A0949DBFF0D34E9084238CE4DF691E152B743848A90E9E4D6B59
+
+INSTALL:
+  Chrome: chrome://extensions -> Developer mode -> Load unpacked -> select ExtensionFolder
+  Edge:   edge://extensions   -> Developer mode -> Load unpacked -> select ExtensionFolder
+
+NEXT (expected behavior after load):
+  - CoGuard icon appears in browser toolbar (pin it).
+  - CoGuard shows Connected/OK when it can read CoGuardian status.json (or its proxy).
