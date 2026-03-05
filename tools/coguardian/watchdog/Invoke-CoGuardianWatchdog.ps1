@@ -1,6 +1,27 @@
 # COGUARDIAN_PATCH__WATCHDOG_REJECT_NEGATIVE_AGE__V1
 Set-StrictMode -Version Latest
 $ErrorActionPreference='Stop'
+
+# COGUARDIAN_PATCH__WATCHDOG_HB_PARSE_LOCAL_FALLBACK__V1
+function Parse-CoGuardianHeartbeat([string]$s){
+  if([string]::IsNullOrWhiteSpace($s)){ return $null }
+
+  # ISO-ish heuristic: contains 'T' or ends with Z or has timezone offset
+  $isoLike = ($s -match 'T') -or ($s -match 'Z\s*$') -or ($s -match '[\+\-]\d\d:\d\d\s*$')
+
+  try {
+    if($isoLike){
+      # Parse as DateTimeOffset, normalize to UTC
+      return ([datetimeoffset]::Parse($s, [Globalization.CultureInfo]::InvariantCulture)).UtcDateTime
+    } else {
+      # Parse as LOCAL time (culture-dependent strings like 03/05/2026 19:27:43)
+      return ([datetime]::Parse($s, [Globalization.CultureInfo]::CurrentCulture)).ToUniversalTime()
+    }
+  } catch {
+    # Last resort: try invariant as local
+    try { return ([datetime]::Parse($s, [Globalization.CultureInfo]::InvariantCulture)).ToUniversalTime() } catch { return $null }
+  }
+}
 $ProgressPreference='SilentlyContinue'
 
 function NowUtc { (Get-Date).ToUniversalTime() }
@@ -125,7 +146,18 @@ try {
     $hb=[datetime]::Parse([string]$st.LastHeartbeatUTC).ToUniversalTime()
     $age=((NowUtc)-$hb).TotalSeconds
     if(($age -ge 0) -and ($age -le $MaxHeartbeatAgeSec)){ $hbOk=$true } else { if($age -lt 0){ Log ("CLOCK_SKEW heartbeat-in-future ageSec=" + $age) } }
-    Log ("HB ageSec={0:n1} ok={1}" -f $age,$hbOk)
+  # (patched) heartbeat evaluation
+  $hbOk=$false
+  $hbUtc=$null
+  if($status -and ($status.PSObject.Properties.Name -contains "LastHeartbeatUTC")){ $hbUtc = Parse-CoGuardianHeartbeat ([string]$status.LastHeartbeatUTC) }
+  if($hbUtc){
+    $age = ([datetime]::UtcNow - $hbUtc).TotalSeconds
+    if($age -lt 0){ Log ("CLOCK_SKEW heartbeat-in-future ageSec=" + $age); $hbOk=$false } else { $hbOk = (($age -ge 0) -and ($age -le $MaxHeartbeatAgeSec)) }
+    Log ("HB ageSec=" + ([math]::Round($age,1)) + " ok=" + $hbOk)
+  } else {
+    Log "HB missing/unparseable ok=False"
+    $hbOk=$false
+  }
   } else {
     Log "HB missing in status.json"
   }
@@ -161,4 +193,5 @@ try {
     ) | Set-Content -LiteralPath $diag -Encoding UTF8
   } catch { }
 }
+
 
