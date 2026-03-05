@@ -1,0 +1,27 @@
+{
+  "schema": "costacks.runbooks.manifest.v1",
+  "updated_utc": "20260305T214302Z",
+  "engine": "tools/costacks/runbooks/Invoke-CoStacksRunbook.ps1",
+  "helper": "tools/costacks/runbooks/Write-CoPong.ps1",
+  "runbooks": [
+    {
+      "name": "ux.ps7",
+      "file": "tools/costacks/runbooks/runbook.ux.ps7.ps1",
+      "description": "Headless PS7 UX signals (prompt/title) + optional violet receipt",
+      "supports": [
+        "Apply",
+        "Verify",
+        "Context"
+      ]
+    },
+    {
+      "name": "coguardian.fix-watchdog",
+      "file": "tools/costacks/runbooks/runbook.coguardian.fix-watchdog.ps1",
+      "description": "Fix/verify CoGuardian Watchdog scheduled task (if present in repo)",
+      "supports": [
+        "Apply",
+        "Verify"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+UTC=20260305T214302Z
+BASESHA=a9cc11ed784a16412071086fcf9d929bb19b8afb
+Added=tools/costacks/runbooks/README.md
+Added2=tools/costacks/runbooks/runbooks.manifest.json
+Added3=tools/costacks/Invoke-CoStacks.ps1
+Added4=tools/costacks/runbooks/Invoke-CoStacksRunbookSelfTest.ps1
+Added5=tools/costacks/packs/New-CoStacksMegaZip.ps1
+Intent=Codify runbook system so sessions + CoGuardian can reliably discover and execute without reinvention.
+Notes=SelfTest + Megazip scaffold included.
