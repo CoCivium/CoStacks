@@ -3,6 +3,9 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference='Stop'
 
 # COGUARDIAN_PATCH__WATCHDOG_HB_PARSE_LOCAL_FALLBACK__V1
+
+# COGUARDIAN_PATCH__WATCHDOG_STATUS_SCOPE__V1
+$status = $null  # ensure defined; do not rely on outer scope
 function Parse-CoGuardianHeartbeat([string]$s){
   if([string]::IsNullOrWhiteSpace($s)){ return $null }
 
@@ -193,5 +196,6 @@ try {
     ) | Set-Content -LiteralPath $diag -Encoding UTF8
   } catch { }
 }
+
 
 

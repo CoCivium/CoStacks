@@ -1,0 +1,5 @@
+UTC=20260305T203319Z
+BASESHA=dd74044046db2c7c300148f9be67e52e6762a8c0
+Changed=tools\coguardian\watchdog\Invoke-CoGuardianWatchdog.ps1
+Added=tools\coguardian\watchdog\Patch-CoGuardianWatchdog.ps1
+Fix=Stop using unsupported regex escapes; marker-based insert for status scope.
