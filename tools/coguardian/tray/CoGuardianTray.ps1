@@ -1,3 +1,14 @@
+# COGUARDIAN_PATCH__NO_CONSOLE_SCANMENU__V1
+function CoGuardian_OpenLocalFolder {
+  try {
+    $p = Join-Path $env:LOCALAPPDATA 'CoCivium\CoGuardian'
+    if(-not (Test-Path -LiteralPath $p)){ New-Item -ItemType Directory -Force -Path $p | Out-Null }
+    Start-Process explorer.exe -ArgumentList @(""$p"") | Out-Null
+  } catch {
+    try { [System.Windows.Forms.MessageBox]::Show("CoGuardian: couldn't open local folder. Path: $env:LOCALAPPDATA\CoCivium\CoGuardian","CoGuardian") | Out-Null } catch {}
+  }
+}
+
 # CoGuardianTray.ps1 - minimal visible system-tray surface for CoStacks (MVP)
 ## COGuardianTray.SingletonMutex
 ## COGuardianTray.StatusJsonTelemetry.EARLY
@@ -177,7 +188,7 @@ $mi2 = New-Object System.Windows.Forms.ToolStripMenuItem 'Open CoStacks Repo (Gi
 $mi2.add_Click({ Start-Process 'https://github.com/CoCivium/CoStacks' })
 [void]$menu.Items.Add($mi2)
 
-$mi3 = New-Object System.Windows.Forms.ToolStripMenuItem 'Run CoGuardian scan.ps1 (local)'
+$mi3 = New-Object System.Windows.Forms.ToolStripMenuItem 'Open CoGuardian folder (local)'
 $mi3.add_Click({
   try {
     $scan = Join-Path $repoTop 'tools\coguardian\scan.ps1'
@@ -265,4 +276,5 @@ try {
   # Best-effort: call once immediately (then again from heartbeat if you add one later).
   Write-CoGuardianStatusJson
 } catch {}
+
 

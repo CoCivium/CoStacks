@@ -1,0 +1,6 @@
+UTC=20260305T184704Z
+BASESHA=4e3f378d3bdbad7bda003026cb9aa1e878fa7fc0
+TRAY=tools\coguardian\tray\CoGuardianTray.ps1
+Marker=# COGUARDIAN_PATCH__NO_CONSOLE_SCANMENU__V1
+Intent=Replace scan/local tray menu item with Explorer-open of local CoGuardian folder (no console).
+LocalFolder=%LOCALAPPDATA%\CoCivium\CoGuardian (contains status.json)
