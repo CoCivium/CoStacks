@@ -1,5 +1,51 @@
 # CoGuardianTray.ps1 - minimal visible system-tray surface for CoStacks (MVP)
 ## COGuardianTray.SingletonMutex
+## COGuardianTray.StatusJsonTelemetry.EARLY
+# EARLY telemetry: must run before any blocking UI/message loop.
+# Writes: %LOCALAPPDATA%\CoCivium\CoGuardian\status.json (and refreshes on timer)
+try {
+  if(-not (Get-Variable -Name CoGuardian_State -Scope Script -ErrorAction SilentlyContinue)){
+    Set-Variable -Name CoGuardian_State -Scope Script -Value "OK"
+  }
+  if(-not (Get-Variable -Name CoGuardian_LastErrorUTC -Scope Script -ErrorAction SilentlyContinue)){
+    Set-Variable -Name CoGuardian_LastErrorUTC -Scope Script -Value ""
+  }
+
+  function Write-CoGuardianStatusJson {
+    param(
+      [string]$State = $script:CoGuardian_State,
+      [string]$LastErrorUTC = $script:CoGuardian_LastErrorUTC
+    )
+    try {
+      $utc = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+      $dir = Join-Path $env:LOCALAPPDATA "CoCivium\CoGuardian"
+      New-Item -ItemType Directory -Force -Path $dir | Out-Null
+      $path = Join-Path $dir "status.json"
+      $obj = [ordered]@{
+        State = $State
+        LastHeartbeatUTC = $utc
+        LastErrorUTC = $LastErrorUTC
+        Host = $env:COMPUTERNAME
+        User = $env:USERNAME
+        PID  = $PID
+        TrayScript = $PSCommandPath
+      }
+      ($obj | ConvertTo-Json -Depth 3) | Set-Content -Encoding UTF8 -LiteralPath $path
+    } catch {}
+  }
+
+  # Write once immediately.
+  Write-CoGuardianStatusJson
+
+  # Heartbeat timer (doesn't depend on HttpListener, firewall, or URLACL).
+  if(-not (Get-Variable -Name __CoGuardianStatusTimer -Scope Script -ErrorAction SilentlyContinue)){
+    $script:__CoGuardianStatusTimer = New-Object System.Timers.Timer
+    $script:__CoGuardianStatusTimer.Interval = 5000
+    $script:__CoGuardianStatusTimer.AutoReset = $true
+    $null = Register-ObjectEvent -InputObject $script:__CoGuardianStatusTimer -EventName Elapsed -Action { try { Write-CoGuardianStatusJson } catch {} } -ErrorAction SilentlyContinue
+    $script:__CoGuardianStatusTimer.Start()
+  }
+} catch {}
 ## COGuardianTray.LocalStatusAPI_v0
 # --- Minimal diagnostic core (v0) ---
 # Goals:

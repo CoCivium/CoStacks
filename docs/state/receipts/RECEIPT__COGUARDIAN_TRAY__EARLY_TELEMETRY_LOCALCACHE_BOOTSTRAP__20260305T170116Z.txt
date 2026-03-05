@@ -1,0 +1,8 @@
+UTC=20260305T170116Z
+BASE_SHA=996b497ba50af66e46fd63ca3e072ccf1e222737
+Tray=tools\coguardian\tray\CoGuardianTray.ps1
+Bootstrap=tools\coguardian\tray\CoGuardianTray_Bootstrap.ps1
+Startup=C:\Users\rball\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\CoGuardianTray.lnk
+StatusPath=%LOCALAPPDATA%\CoCivium\CoGuardian\status.json
+CacheDir=%LOCALAPPDATA%\CoCivium\CoGuardian\cache
+Intent=Telemetry must run before UI loop; Startup should not rely on UNC; avoid boot toast
