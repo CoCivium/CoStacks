@@ -9,7 +9,6 @@ function LogLine([string]$path,[string]$m){
   try { Add-Content -LiteralPath $path -Value ("[{0}] {1}" -f (NowUtc), $m) -Encoding UTF8 } catch {}
 }
 
-# RepoRoot: ...\tools\coguardian\tray  ->  repo root
 $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..\..")).Path
 $TrayPath = Join-Path $RepoRoot "tools\coguardian\tray\CoGuardianTray.ps1"
 
@@ -22,28 +21,40 @@ if(-not (Test-Path -LiteralPath $TrayPath)){
   throw "FAIL-CLOSED: Missing tray script at $TrayPath"
 }
 
-# HARD DEDUPE: kill any running tray instances (old or new)
-try {
-  $procs = Get-CimInstance Win32_Process |
-    Where-Object { $_.Name -eq 'pwsh.exe' -and $_.CommandLine -match [regex]::Escape("$TrayPath") } |
+function GetTrayProcs(){
+  Get-CimInstance Win32_Process |
+    Where-Object { $_.Name -eq 'pwsh.exe' -and $_.CommandLine -match 'CoGuardianTray\.ps1' } |
     Select-Object ProcessId,CommandLine
-  $cnt = ($procs | Measure-Object).Count
-  LogLine $BootLog ("FOUND_TRAY_PROCS count=" + $cnt)
-  foreach($p in $procs){
-    try {
-      LogLine $BootLog ("KILLING_PID=" + $p.ProcessId)
-      Stop-Process -Id $p.ProcessId -Force -ErrorAction SilentlyContinue
-    } catch {
-      LogLine $BootLog ("KILL_ERROR pid=" + $p.ProcessId + " msg=" + $_.Exception.Message)
+}
+
+function HardKill([int]$pid){
+  try {
+    Stop-Process -Id $pid -Force -ErrorAction SilentlyContinue
+  } catch {}
+  Start-Sleep -Milliseconds 150
+  try {
+    if(Get-Process -Id $pid -ErrorAction SilentlyContinue){
+      & "$env:WINDIR\System32\taskkill.exe" /PID $pid /F /T | Out-Null
     }
+  } catch {}
+}
+
+# HARD DEDUPE (pre-launch)
+try {
+  $procs = GetTrayProcs
+  $cnt = ($procs | Measure-Object).Count
+  LogLine $BootLog ("PRE_FOUND_TRAY_PROCS count=" + $cnt)
+  foreach($p in $procs){
+    LogLine $BootLog ("PRE_KILLING_PID=" + $p.ProcessId)
+    HardKill ([int]$p.ProcessId)
   }
 } catch {
-  LogLine $BootLog ("PROC_SCAN_ERROR " + $_.Exception.Message)
+  LogLine $BootLog ("PRE_PROC_SCAN_ERROR " + $_.Exception.Message)
 }
 
 Start-Sleep -Milliseconds 500
 
-# Rotate ACTIVE log for unambiguous verification
+# ACTIVE LOG (precreate + rotate)
 $Active = Join-Path $env:USERPROFILE "Downloads\CoGuardianTray__ACTIVE.log.txt"
 try {
   if(Test-Path -LiteralPath $Active){
@@ -53,6 +64,12 @@ try {
   }
 } catch {
   LogLine $BootLog ("LOG_ROTATE_ERROR " + $_.Exception.Message)
+}
+try {
+  New-Item -ItemType File -Force -Path $Active | Out-Null
+  LogLine $BootLog ("ACTIVE_LOG_PRECREATED " + $Active)
+} catch {
+  LogLine $BootLog ("ACTIVE_LOG_PRECREATE_ERROR " + $_.Exception.Message)
 }
 
 # Launch tray
@@ -68,6 +85,27 @@ try {
 } catch {
   LogLine $BootLog ("LAUNCH_TRAY_ERROR " + $_.Exception.Message)
   throw
+}
+
+Start-Sleep -Milliseconds 600
+
+# HARD DEDUPE (post-launch) -> keep newest
+try {
+  $procs2 = GetTrayProcs
+  $cnt2 = ($procs2 | Measure-Object).Count
+  LogLine $BootLog ("POST_FOUND_TRAY_PROCS count=" + $cnt2)
+  if($cnt2 -gt 1){
+    $keep = (Get-Process -Id ($procs2.ProcessId) | Sort-Object StartTime -Descending | Select-Object -First 1).Id
+    LogLine $BootLog ("POST_KEEP_PID=" + $keep)
+    foreach($p in $procs2){
+      if([int]$p.ProcessId -ne [int]$keep){
+        LogLine $BootLog ("POST_KILLING_PID=" + $p.ProcessId)
+        HardKill ([int]$p.ProcessId)
+      }
+    }
+  }
+} catch {
+  LogLine $BootLog ("POST_DEDUPE_ERROR " + $_.Exception.Message)
 }
 
 LogLine $BootLog ("BOOTSTRAP_DONE BootLog=" + $BootLog)
