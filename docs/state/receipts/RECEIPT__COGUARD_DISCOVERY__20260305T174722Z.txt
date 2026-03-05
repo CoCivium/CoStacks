@@ -1,0 +1,10 @@
+UTC=20260305T174722Z
+BASE_SHA=90c1627f09fc9c38dea1e43ba629f9c14a05c776
+CSV=docs/state/reports/REPORT__COGUARD_DISCOVERY__20260305T174722Z.csv
+CSV_SHA256=4B5D2353697BA286353BCE74915C674C9B2E012A2A06231B6C688F5BB8C309D2
+TXT=docs/state/reports/REPORT__COGUARD_DISCOVERY__20260305T174722Z.txt
+TXT_SHA256=CB61D51CED53444D07268A89AF67D3C1BB15C9DBE26A46A618BC8BE286388864
+CandidateExtensionFoldersCount=1
+CandidateExtensionFolders=\\Server\CoCiviumAdmin\CoVault\CoCiviumAdmin\_Work\repos\CoStacks\tools\coguardian\extension_mv3
+Helper_OpenChrome=tools/coguard/install/Open-Chrome-Extensions.ps1
+Helper_OpenEdge=tools/coguard/install/Open-Edge-Extensions.ps1

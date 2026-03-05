@@ -1,0 +1,16 @@
+UTC=20260305T174722Z
+BASE_SHA=90c1627f09fc9c38dea1e43ba629f9c14a05c776
+
+BrowsersDetected:
+  Chrome => C:\Program Files\Google\Chrome\Application\chrome.exe
+  Edge => C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe
+
+CandidateExtensionFolders (unpacked):
+  \\Server\CoCiviumAdmin\CoVault\CoCiviumAdmin\_Work\repos\CoStacks\tools\coguardian\extension_mv3
+
+NextSteps_IfFolderFound:
+  Chrome: chrome://extensions -> Developer mode -> Load unpacked -> select folder
+  Edge:   edge://extensions   -> Developer mode -> Load unpacked -> select folder
+
+Preferred contract:
+  CoGuard reads status.json; writes events to local outbox for CoGuardian to forward upstream.
