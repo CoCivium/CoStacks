@@ -1,0 +1,8 @@
+UTC=20260305T142820Z
+Repo=\\Server\CoCiviumAdmin\CoVault\CoCiviumAdmin\_Work\repos\CoStacks
+BaseSHA=69e3757c6b072320489f0545978b0c975a81e90c
+Action=Removed legacy CoStacks-CoGuardian-Tray.lnk if present; normalized CoGuardianTray.lnk windowless; injected singleton mutex; appended icon telemetry contract
+TrayScript=tools\coguardian\tray\CoGuardianTray.ps1
+Contract=docs\specs\CoGuardian_Tray_Contract.md
+StartupLink=C:\Users\rball\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\CoGuardianTray.lnk
+MutexName=Global\CoCivium.CoGuardianTray

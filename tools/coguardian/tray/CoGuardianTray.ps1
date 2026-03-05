@@ -1,4 +1,18 @@
-﻿# CoGuardianTray.ps1 - minimal visible system-tray surface for CoStacks (MVP)
+# CoGuardianTray.ps1 - minimal visible system-tray surface for CoStacks (MVP)
+## COGuardianTray.SingletonMutex
+# Single-instance guard: if another tray instance is running, exit immediately.
+# Global namespace reduces duplicates across sessions/users on the same box.
+$__CoGuardianTrayMutexName = 'Global\CoCivium.CoGuardianTray'
+try {
+  $__createdNew = $false
+  $__mutex = [System.Threading.Mutex]::new($true, $__CoGuardianTrayMutexName, [ref]$__createdNew)
+  if(-not $__createdNew){
+    # Another instance already holds the mutex
+    return
+  }
+} catch {
+  # If mutex fails, continue rather than hard-fail, but duplication risk remains.
+}
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
