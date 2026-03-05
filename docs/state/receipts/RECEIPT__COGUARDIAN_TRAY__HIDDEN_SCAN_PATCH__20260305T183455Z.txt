@@ -1,0 +1,5 @@
+UTC=20260305T183455Z
+BASESHA=d7466045e296dfa7c8b87660bf7d9d3fa59910b0
+Tray=tools\coguardian\tray\CoGuardianTray.ps1
+Marker=# COGUARDIAN_PATCH__HIDDEN_SCAN__V1
+Intent=Stop tray menu scan from spawning visible console; run scan hidden instead
