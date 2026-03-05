@@ -1,0 +1,29 @@
+UTC=20260305T183007Z
+BASE_SHA=026ff3edad08127c0d4fe5feae1ff71bec9a8009
+EXT=tools\coguardian\extension_mv3
+MANIFEST=tools\coguardian\extension_mv3/manifest.json
+POPUP=popup.html
+SERVICE_WORKER=service_worker.js
+
+FILES_COUNT=5
+HITS_COUNT=12
+
+TopSuspects (grouped by file, counts):
+  tools\coguardian\extension_mv3/service_worker.js  (hits=5)
+  tools\coguardian\extension_mv3/popup.html  (hits=4)
+  tools\coguardian\extension_mv3/manifest.json  (hits=2)
+  tools\coguardian\extension_mv3/popup.js  (hits=1)
+
+AllHits (File | Needle):
+  tools\coguardian\extension_mv3/manifest.json | CoGuardian
+  tools\coguardian\extension_mv3/manifest.json | CoGuard
+  tools\coguardian\extension_mv3/popup.html | Open COHEALTH
+  tools\coguardian\extension_mv3/popup.html | Open CoStacks
+  tools\coguardian\extension_mv3/popup.html | CoGuardian
+  tools\coguardian\extension_mv3/popup.html | CoGuard
+  tools\coguardian\extension_mv3/popup.js | chrome.tabs
+  tools\coguardian\extension_mv3/service_worker.js | Run
+  tools\coguardian\extension_mv3/service_worker.js | CoGuardian
+  tools\coguardian\extension_mv3/service_worker.js | CoGuard
+  tools\coguardian\extension_mv3/service_worker.js | chrome.runtime
+  tools\coguardian\extension_mv3/service_worker.js | chrome.alarms
