@@ -1,0 +1,6 @@
+UTC=20260305T164148Z
+BASE_SHA=747d6ca7cc04705f29d22a939def652001da68f1
+Tray=tools\coguardian\tray\CoGuardianTray.ps1
+StartupLink=C:\Users\rball\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\CoGuardianTray.lnk
+pwshReal=pwsh
+Note=Completes prior partial wave that failed on .Count; commits tray patch + startup normalization.

@@ -1,5 +1,95 @@
 # CoGuardianTray.ps1 - minimal visible system-tray surface for CoStacks (MVP)
 ## COGuardianTray.SingletonMutex
+## COGuardianTray.LocalStatusAPI_v0
+# --- Minimal diagnostic core (v0) ---
+# Goals:
+#  - Provide a stable heartbeat + tooltip fields for screenshots/diagnosis.
+#  - Provide a tiny localhost status endpoint for future CoGuard extension handshake.
+# Notes:
+#  - Keep this lightweight; do not block UI thread; degrade gracefully if listener fails.
+
+$script:CoGuardian = [ordered]@{
+  SessionLabel      = 
+  Role              = 
+  StartedUTC        = (Get-Date).ToUniversalTime().ToString('yyyyMMddTHHmmssZ')
+  LastHeartbeatUTC  = 
+  LastErrorUTC      = 
+  State             = 'OK'     # OK|WARN|FAIL
+  Activity          = False
+  LastNote          = 'boot'
+  VersionTag        = 'v0'
+}
+
+function Set-CoGState {
+  param([ValidateSet('OK','WARN','FAIL')][string]$State, [string]$Note = '')
+  $script:CoGuardian.State = $State
+  if($Note){ $script:CoGuardian.LastNote = $Note }
+}
+
+function Touch-Heartbeat {
+  $script:CoGuardian.LastHeartbeatUTC = (Get-Date).ToUniversalTime().ToString('yyyyMMddTHHmmssZ')
+}
+
+function Touch-Error {
+  $script:CoGuardian.LastErrorUTC = (Get-Date).ToUniversalTime().ToString('yyyyMMddTHHmmssZ')
+  Set-CoGState -State 'FAIL' -Note 'error'
+}
+
+# Local status endpoint (read-only): http://127.0.0.1:17777/status
+# Returns JSON snapshot of $script:CoGuardian
+function Start-CoGStatusListener {
+  try {
+    $listener = [System.Net.HttpListener]::new()
+    $listener.Prefixes.Add('http://127.0.0.1:17777/')
+    $listener.Start()
+
+    $null = [System.Threading.ThreadPool]::QueueUserWorkItem({
+      param($l)
+      while($l.IsListening){
+        try {
+          $ctx = $l.GetContext()
+          $path = $ctx.Request.Url.AbsolutePath
+          if($path -eq '/status'){
+            $ctx.Response.StatusCode = 200
+            $ctx.Response.ContentType = 'application/json; charset=utf-8'
+            $body = ($script:CoGuardian | ConvertTo-Json -Depth 4)
+          } else {
+            $ctx.Response.StatusCode = 404
+            $ctx.Response.ContentType = 'text/plain; charset=utf-8'
+            $body = 'not found'
+          }
+          $bytes = [System.Text.Encoding]::UTF8.GetBytes($body)
+          $ctx.Response.OutputStream.Write($bytes,0,$bytes.Length)
+          $ctx.Response.OutputStream.Close()
+        } catch {
+          # keep looping; do not kill tray
+          try { Touch-Error } catch {}
+        }
+      }
+    }, $listener) | Out-Null
+
+    return $listener
+  } catch {
+    # Listener is optional. If blocked, we still run tray.
+    try { Set-CoGState -State 'WARN' -Note 'listener blocked' } catch {}
+    return $null
+  }
+}
+
+# Tooltip builder (must be short-ish, but diagnostic)
+function Get-CoGTooltip {
+  $sl = if([string]::IsNullOrWhiteSpace($script:CoGuardian.SessionLabel)){'(no COS_SESSION_LABEL)'}else{$script:CoGuardian.SessionLabel}
+  $rl = if([string]::IsNullOrWhiteSpace($script:CoGuardian.Role)){'(no COS_ROLE)'}else{$script:CoGuardian.Role}
+  return ("CoGuardian {0} | {1} | {2} | HB={3} | ERR={4} | {5}" -f
+    $script:CoGuardian.VersionTag,
+    $sl,
+    $rl,
+    ($script:CoGuardian.LastHeartbeatUTC ?? 'never'),
+    ($script:CoGuardian.LastErrorUTC ?? 'none'),
+    ($script:CoGuardian.State + (if($script:CoGuardian.Activity){' +ACT'}else{''}))
+  )
+}
+# --- End minimal diagnostic core (v0) ---
 # Single-instance guard: if another tray instance is running, exit immediately.
 # Global namespace reduces duplicates across sessions/users on the same box.
 $__CoGuardianTrayMutexName = 'Global\CoCivium.CoGuardianTray'
@@ -75,3 +165,18 @@ $miX.add_Click({
 
 $ni.ContextMenuStrip = $menu
 [System.Windows.Forms.Application]::Run()
+## COGuardianTray.HeartbeatTimer_v0
+try {
+  # Start listener first (optional)
+  if(-not $script:__CoGListener){ $script:__CoGListener = Start-CoGStatusListener }
+  # Heartbeat timer
+  if(-not $script:__CoGHeartbeatTimer){
+    $script:__CoGHeartbeatTimer = New-Object System.Timers.Timer
+    $script:__CoGHeartbeatTimer.Interval = 5000
+    $script:__CoGHeartbeatTimer.AutoReset = $true
+    $script:__CoGHeartbeatTimer.add_Elapsed({ try { Touch-Heartbeat } catch {} })
+    $script:__CoGHeartbeatTimer.Start()
+  }
+} catch {
+  try { Touch-Error } catch {}
+}
