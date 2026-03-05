@@ -1,0 +1,5 @@
+UTC=20260305T195405Z
+BASESHA=4d96f3a1f809134d4579bd011c382eb714a0f721
+Verifier=tools\coguardian\watchdog\Verify-CoGuardianWatchdogTask.ps1
+Fix=State from Get-ScheduledTask; tolerate missing Get-ScheduledTaskInfo props; include schtasks proof.
+Intent=Verifier must run on this host without property mismatches.
