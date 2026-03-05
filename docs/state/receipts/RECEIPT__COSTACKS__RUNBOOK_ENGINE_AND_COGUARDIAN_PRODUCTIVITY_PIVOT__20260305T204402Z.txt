@@ -1,0 +1,6 @@
+UTC=20260305T204402Z
+BASESHA=14125bd8e928277957d8cda3fbd1277617ceab31
+Added=tools\costacks\runbooks\Invoke-CoStacksRunbook.ps1
+Added=tools\costacks\runbooks\runbook.coguardian.fix-watchdog.ps1
+Added=tools\costacks\runbooks\runbook.ux.ps7.ps1
+Intent=Stop CoPong tax; introduce runbook engine; disable watchdog to stop popups; fix watchdog scope+hidden args; renew+verify; optional PS7 UX prompt.
