@@ -1,330 +1,91 @@
-# COGUARDIAN_PATCH__HEARTBEAT_UTC__V1
-# COGUARDIAN_PATCH__TRAY_TELEMETRY__V3_1
-# Telemetry log: %LOCALAPPDATA%\CoCivium\CoGuardian\tray_telemetry.log
-function CoGuardian_TelemetryPath {
-  try { return (Join-Path $env:LOCALAPPDATA 'CoCivium\CoGuardian\tray_telemetry.log') } catch { return $null }
+<# CoGuardianTray (resident)
+   - Creates a NotifyIcon in the Windows tray and stays alive via Application.Run().
+   - Writes a local log in %USERPROFILE%\Downloads.
+   - Safe: no prompts.
+#>
+param(
+  [Parameter(Mandatory=$false)][string]$LogPath
+)
+
+Set-StrictMode -Version Latest
+$ErrorActionPreference='Stop'
+$ProgressPreference='SilentlyContinue'
+
+function NowUtc(){ (Get-Date).ToUniversalTime().ToString('yyyyMMddTHHmmssZ') }
+function DefaultLog(){
+  Join-Path $env:USERPROFILE ("Downloads\CoGuardianTray__" + (NowUtc) + ".log.txt")
 }
-function CoGuardian_Log {
-  param([string]$Msg)
-  try {
-    $p = CoGuardian_TelemetryPath
-    if(-not $p){ return }
-    $dir = Split-Path $p -Parent
-    if(-not (Test-Path -LiteralPath $dir)){ New-Item -ItemType Directory -Force -Path $dir | Out-Null }
-    $ts = (Get-Date).ToUniversalTime().ToString('o')
-    Add-Content -LiteralPath $p -Encoding UTF8 -Value ("[{0}] {1}" -f $ts, $Msg)
-  } catch { }
-}
-# Create log early (proves we're running THIS script copy)
-try { CoGuardian_Log ("BOOT: tray script running: " + $MyInvocation.MyCommand.Path) } catch { }
-function CoGuardian_SP {
-  param([Parameter(ValueFromRemainingArguments=$true)][object[]]$Args)
-  try {
-    $joined = ($Args | ForEach-Object { [string]$PSItem }) -join ' '
-    CoGuardian_Log ("SPAWN_TOKEN: Start-Process " + $joined)
-  } catch { }
-  try { Start-Process @Args | Out-Null } catch { try { CoGuardian_Log ("SPAWN_FAIL: " + $_.Exception.Message) } catch { } }
+if([string]::IsNullOrWhiteSpace($LogPath)){ $LogPath = DefaultLog }
+
+function Log([string]$m){
+  $line = ("[{0}] {1}" -f (NowUtc), $m)
+  try { Add-Content -LiteralPath $LogPath -Value $line -Encoding UTF8 } catch {}
+  Write-Host $line
 }
 
-# COGUARDIAN_PATCH__TRAY_TELEMETRY__V2
-# Telemetry log: %LOCALAPPDATA%\CoCivium\CoGuardian\tray_telemetry.log
-function CoGuardian_TelemetryPath {
-  try { return (Join-Path $env:LOCALAPPDATA 'CoCivium\CoGuardian\tray_telemetry.log') } catch { return $null }
-}
-function CoGuardian_Log {
-  param([string]$Msg)
-  try {
-    $p = CoGuardian_TelemetryPath
-    if(-not $p){ return }
-    $dir = Split-Path $p -Parent
-    if(-not (Test-Path -LiteralPath $dir)){ New-Item -ItemType Directory -Force -Path $dir | Out-Null }
-    $ts = (Get-Date).ToUniversalTime().ToString('o')
-    Add-Content -LiteralPath $p -Encoding UTF8 -Value ("[{0}] {1}" -f $ts, $Msg)
-  } catch { }
-}
+Log ("START LogPath=" + $LogPath)
 
-# COGUARDIAN_PATCH__NO_CONSOLE_SCANMENU__V1
-function CoGuardian_OpenLocalFolder {
-  try {
-    $p = Join-Path $env:LOCALAPPDATA 'CoCivium\CoGuardian'
-    if(-not (Test-Path -LiteralPath $p)){ New-Item -ItemType Directory -Force -Path $p | Out-Null }
-    CoGuardian_Log ("SPAWN_LINE: Start-Process explorer.exe -ArgumentList @(""$p"") | Out-Null".Trim());
-    CoGuardian_SP explorer.exe -ArgumentList @(""$p"") | Out-Null
-  } catch {
-    try { [System.Windows.Forms.MessageBox]::Show("CoGuardian: couldn't open local folder. Path: $env:LOCALAPPDATA\CoCivium\CoGuardian","CoGuardian") | Out-Null } catch {}
-  }
-}
-
-# CoGuardianTray.ps1 - minimal visible system-tray surface for CoStacks (MVP)
-## COGuardianTray.SingletonMutex
-## COGuardianTray.StatusJsonTelemetry.EARLY
-# EARLY telemetry: must run before any blocking UI/message loop.
-# Writes: %LOCALAPPDATA%\CoCivium\CoGuardian\status.json (and refreshes on timer)
-try {
-  if(-not (Get-Variable -Name CoGuardian_State -Scope Script -ErrorAction SilentlyContinue)){
-    Set-Variable -Name CoGuardian_State -Scope Script -Value "OK"
-  }
-  if(-not (Get-Variable -Name CoGuardian_LastErrorUTC -Scope Script -ErrorAction SilentlyContinue)){
-    Set-Variable -Name CoGuardian_LastErrorUTC -Scope Script -Value ""
-  }
-
-  function Write-CoGuardianStatusJson {
-    param(
-      [string]$State = $script:CoGuardian_State,
-      [string]$LastErrorUTC = $script:CoGuardian_LastErrorUTC
-    )
-    try {
-      $utc = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
-      $dir = Join-Path $env:LOCALAPPDATA "CoCivium\CoGuardian"
-      New-Item -ItemType Directory -Force -Path $dir | Out-Null
-      $path = Join-Path $dir "status.json"
-      $obj = [ordered]@{
-        State = $State
-        LastHeartbeatUTC = $utc
-        LastErrorUTC = $LastErrorUTC
-        Host = $env:COMPUTERNAME
-        User = $env:USERNAME
-        PID  = $PID
-        TrayScript = $PSCommandPath
-      }
-      ($obj | ConvertTo-Json -Depth 3) | Set-Content -Encoding UTF8 -LiteralPath $path
-    } catch {}
-  }
-
-  # Write once immediately.
-  Write-CoGuardianStatusJson
-
-  # Heartbeat timer (doesn't depend on HttpListener, firewall, or URLACL).
-  if(-not (Get-Variable -Name __CoGuardianStatusTimer -Scope Script -ErrorAction SilentlyContinue)){
-    $script:__CoGuardianStatusTimer = New-Object System.Timers.Timer
-    $script:__CoGuardianStatusTimer.Interval = 5000
-    $script:__CoGuardianStatusTimer.AutoReset = $true
-    $null = Register-ObjectEvent -InputObject $script:__CoGuardianStatusTimer -EventName Elapsed -Action { try { Write-CoGuardianStatusJson } catch {} } -ErrorAction SilentlyContinue
-    $script:__CoGuardianStatusTimer.Start()
-  }
-} catch {}
-## COGuardianTray.LocalStatusAPI_v0
-# --- Minimal diagnostic core (v0) ---
-# Goals:
-#  - Provide a stable heartbeat + tooltip fields for screenshots/diagnosis.
-#  - Provide a tiny localhost status endpoint for future CoGuard extension handshake.
-# Notes:
-#  - Keep this lightweight; do not block UI thread; degrade gracefully if listener fails.
-
-$script:CoGuardian = [ordered]@{
-  SessionLabel      = 
-  Role              = 
-  StartedUTC        = (Get-Date).ToUniversalTime().ToString('yyyyMMddTHHmmssZ')
-  LastHeartbeatUTC  = 
-  LastErrorUTC      = 
-  State             = 'OK'     # OK|WARN|FAIL
-  Activity          = False
-  LastNote          = 'boot'
-  VersionTag        = 'v0'
-}
-
-function Set-CoGState {
-  param([ValidateSet('OK','WARN','FAIL')][string]$State, [string]$Note = '')
-  $script:CoGuardian.State = $State
-  if($Note){ $script:CoGuardian.LastNote = $Note }
-}
-
-function Touch-Heartbeat {
-  $script:CoGuardian.LastHeartbeatUTC = ((Get-Date).ToUniversalTime().ToString('o')).ToUniversalTime().ToString('yyyyMMddTHHmmssZ')
-}
-
-function Touch-Error {
-  $script:CoGuardian.LastErrorUTC = (Get-Date).ToUniversalTime().ToString('yyyyMMddTHHmmssZ')
-  Set-CoGState -State 'FAIL' -Note 'error'
-}
-
-# Local status endpoint (read-only): http://127.0.0.1:17777/status
-# Returns JSON snapshot of $script:CoGuardian
-function Start-CoGStatusListener {
-  try {
-    $listener = [System.Net.HttpListener]::new()
-    $listener.Prefixes.Add('http://127.0.0.1:17777/')
-    $listener.Start()
-
-    $null = [System.Threading.ThreadPool]::QueueUserWorkItem({
-      param($l)
-      while($l.IsListening){
-        try {
-          $ctx = $l.GetContext()
-          $path = $ctx.Request.Url.AbsolutePath
-          if($path -eq '/status'){
-            $ctx.Response.StatusCode = 200
-            $ctx.Response.ContentType = 'application/json; charset=utf-8'
-            $body = ($script:CoGuardian | ConvertTo-Json -Depth 4)
-          } else {
-            $ctx.Response.StatusCode = 404
-            $ctx.Response.ContentType = 'text/plain; charset=utf-8'
-            $body = 'not found'
-          }
-          $bytes = [System.Text.Encoding]::UTF8.GetBytes($body)
-          $ctx.Response.OutputStream.Write($bytes,0,$bytes.Length)
-          $ctx.Response.OutputStream.Close()
-        } catch {
-          # keep looping; do not kill tray
-          try { Touch-Error } catch {}
-        }
-      }
-    }, $listener) | Out-Null
-
-    return $listener
-  } catch {
-    # Listener is optional. If blocked, we still run tray.
-    try { Set-CoGState -State 'WARN' -Note 'listener blocked' } catch {}
-    return $null
-  }
-}
-
-# Tooltip builder (must be short-ish, but diagnostic)
-function Get-CoGTooltip {
-  $sl = if([string]::IsNullOrWhiteSpace($script:CoGuardian.SessionLabel)){'(no COS_SESSION_LABEL)'}else{$script:CoGuardian.SessionLabel}
-  $rl = if([string]::IsNullOrWhiteSpace($script:CoGuardian.Role)){'(no COS_ROLE)'}else{$script:CoGuardian.Role}
-  return ("CoGuardian {0} | {1} | {2} | HB={3} | ERR={4} | {5}" -f
-    $script:CoGuardian.VersionTag,
-    $sl,
-    $rl,
-    ($script:CoGuardian.LastHeartbeatUTC ?? 'never'),
-    ($script:CoGuardian.LastErrorUTC ?? 'none'),
-    ($script:CoGuardian.State + (if($script:CoGuardian.Activity){' +ACT'}else{''}))
-  )
-}
-# --- End minimal diagnostic core (v0) ---
-# Single-instance guard: if another tray instance is running, exit immediately.
-# Global namespace reduces duplicates across sessions/users on the same box.
-$__CoGuardianTrayMutexName = 'Global\CoCivium.CoGuardianTray'
-try {
-  $__createdNew = $false
-  $__mutex = [System.Threading.Mutex]::new($true, $__CoGuardianTrayMutexName, [ref]$__createdNew)
-  if(-not $__createdNew){
-    # Another instance already holds the mutex
-    return
-  }
-} catch {
-  # If mutex fails, continue rather than hard-fail, but duplication risk remains.
-}
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
-$repoTop = (git rev-parse --show-toplevel 2>$null)
-if(-not $repoTop){ $repoTop = (Get-Location).Path }
-
-$icoPath = Join-Path $repoTop 'tools\coguardian\extension_mv3\icons\icon.ico'
-$ico = $null
-try { if(Test-Path -LiteralPath $icoPath){ $ico = New-Object System.Drawing.Icon($icoPath) } } catch { }
+# Build a simple icon (blue dot) so we always have *something*
+$bmp = New-Object System.Drawing.Bitmap 16,16
+$g = [System.Drawing.Graphics]::FromImage($bmp)
+$g.Clear([System.Drawing.Color]::Transparent)
+$brush = New-Object System.Drawing.SolidBrush([System.Drawing.Color]::DodgerBlue)
+$g.FillEllipse($brush, 2,2,12,12)
+$g.Dispose()
+$icon = [System.Drawing.Icon]::FromHandle($bmp.GetHicon())
 
 $ni = New-Object System.Windows.Forms.NotifyIcon
-$ni.Text = 'CoGuardian (CoStacks)'
-if($ico){ $ni.Icon = $ico }
+$ni.Icon = $icon
 $ni.Visible = $true
-$ni.BalloonTipTitle = 'CoGuardian'
-$ni.BalloonTipText = 'Running. Right-click for actions.'
-$ni.ShowBalloonTip(1500)
+$ni.Text = "CoGuardian (tray)"
 
+# Context menu
 $menu = New-Object System.Windows.Forms.ContextMenuStrip
 
-$mi1 = New-Object System.Windows.Forms.ToolStripMenuItem 'Open COHEALTH (GitHub)'
-$mi1.add_Click({ try{ CoGuardian_Log ("CLICK:" + ($this.Text)) } catch { CoGuardian_Log "CLICK:(unknown)" };  Start-Process 'https://github.com/CoCivium/CoStacks/blob/main/docs/COHEALTH__LATEST.md' })
-[void]$menu.Items.Add($mi1)
-
-$mi2 = New-Object System.Windows.Forms.ToolStripMenuItem 'Open CoStacks Repo (GitHub)'
-$mi2.add_Click({ try{ CoGuardian_Log ("CLICK:" + ($this.Text)) } catch { CoGuardian_Log "CLICK:(unknown)" };  Start-Process 'https://github.com/CoCivium/CoStacks' })
-[void]$menu.Items.Add($mi2)
-
-$mi3 = New-Object System.Windows.Forms.ToolStripMenuItem 'Open CoGuardian folder (local)'
-$mi3.add_Click({ try{ CoGuardian_Log ("CLICK:" + ($this.Text)) } catch { CoGuardian_Log "CLICK:(unknown)" }; 
-  try {
-    $scan = Join-Path $repoTop 'tools\coguardian\scan.ps1'
-    if(Test-Path -LiteralPath $scan){
-      $shaFile = Join-Path $repoTop 'docs\COBUSMIRROR_SHA__LATEST.txt'
-$sha = $null
-try { if(Test-Path -LiteralPath $shaFile){ $sha = (Get-Content -LiteralPath $shaFile -TotalCount 1).Trim() } } catch { }
-if(-not $sha){
-  [System.Windows.Forms.MessageBox]::Show("Missing CoBusMirror SHA. Expected: $shaFile")
-} else {
-  CoGuardian_Log ("SPAWN_LINE: Start-Process pwsh -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File',$scan,'-CoBusMirrorSha',$sha) -WorkingDirectory $repoTop".Trim());
-  CoGuardian_SP pwsh -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File',$scan,'-CoBusMirrorSha',$sha) -WorkingDirectory $repoTop
-}
-    } else {
-      [System.Windows.Forms.MessageBox]::Show("scan.ps1 not found at: $scan")
-    }
-  } catch {
-    [System.Windows.Forms.MessageBox]::Show("Error: " + $_.Exception.Message)
-  }
+$miOpenLog = New-Object System.Windows.Forms.ToolStripMenuItem
+$miOpenLog.Text = "Open Log"
+$miOpenLog.Add_Click({
+  try { Start-Process notepad.exe -ArgumentList @($LogPath) | Out-Null } catch {}
 })
-[void]$menu.Items.Add($mi3)
 
-[void]$menu.Items.Add((New-Object System.Windows.Forms.ToolStripSeparator))
+$miOpenFolder = New-Object System.Windows.Forms.ToolStripMenuItem
+$miOpenFolder.Text = "Open Downloads"
+$miOpenFolder.Add_Click({
+  try { Start-Process explorer.exe -ArgumentList @((Join-Path $env:USERPROFILE "Downloads")) | Out-Null } catch {}
+})
 
-$miX = New-Object System.Windows.Forms.ToolStripMenuItem 'Exit CoGuardian'
-$miX.add_Click({ try{ CoGuardian_Log ("CLICK:" + ($this.Text)) } catch { CoGuardian_Log "CLICK:(unknown)" }; 
+$miExit = New-Object System.Windows.Forms.ToolStripMenuItem
+$miExit.Text = "Exit"
+$miExit.Add_Click({
+  try { Log "EXIT requested" } catch {}
   $ni.Visible = $false
   $ni.Dispose()
   [System.Windows.Forms.Application]::Exit()
 })
-[void]$menu.Items.Add($miX)
 
+[void]$menu.Items.Add($miOpenLog)
+[void]$menu.Items.Add($miOpenFolder)
+[void]$menu.Items.Add((New-Object System.Windows.Forms.ToolStripSeparator))
+[void]$menu.Items.Add($miExit)
 $ni.ContextMenuStrip = $menu
+
+# Double click opens log
+$ni.Add_DoubleClick({ try { Start-Process notepad.exe -ArgumentList @($LogPath) | Out-Null } catch {} })
+
+# Heartbeat timer (proves liveness)
+$timer = New-Object System.Windows.Forms.Timer
+$timer.Interval = 60000
+$timer.Add_Tick({
+  try {
+    $ni.Text = "CoGuardian (tray) " + (Get-Date).ToString("HH:mm")
+    Log "HEARTBEAT"
+  } catch {}
+})
+$timer.Start()
+
+Log "RUN Application.Run()"
 [System.Windows.Forms.Application]::Run()
-## COGuardianTray.HeartbeatTimer_v0
-try {
-  # Start listener first (optional)
-  if(-not $script:__CoGListener){ $script:__CoGListener = Start-CoGStatusListener }
-  # Heartbeat timer
-  if(-not $script:__CoGHeartbeatTimer){
-    $script:__CoGHeartbeatTimer = New-Object System.Timers.Timer
-    $script:__CoGHeartbeatTimer.Interval = 5000
-    $script:__CoGHeartbeatTimer.AutoReset = $true
-    $script:__CoGHeartbeatTimer.add_Elapsed({ try { Touch-Heartbeat } catch {} })
-    $script:__CoGHeartbeatTimer.Start()
-  }
-} catch {
-  try { Touch-Error } catch {}
-}
-
-
-## COGuardianTray.StatusJsonTelemetry
-# Telemetry: write status.json locally so diagnostics never depend on HttpListener/URLACL/firewall.
-# Location: %LOCALAPPDATA%\CoCivium\CoGuardian\status.json
-try {
-  if(-not (Get-Variable -Name CoGuardian_State -Scope Script -ErrorAction SilentlyContinue)){
-    Set-Variable -Name CoGuardian_State -Scope Script -Value "OK"
-  }
-  if(-not (Get-Variable -Name CoGuardian_LastErrorUTC -Scope Script -ErrorAction SilentlyContinue)){
-    Set-Variable -Name CoGuardian_LastErrorUTC -Scope Script -Value ""
-  }
-
-  function Write-CoGuardianStatusJson {
-    param(
-      [string]$State = $script:CoGuardian_State,
-      [string]$LastErrorUTC = $script:CoGuardian_LastErrorUTC
-    )
-    try {
-      $utc = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
-      $dir = Join-Path $env:LOCALAPPDATA "CoCivium\CoGuardian"
-      New-Item -ItemType Directory -Force -Path $dir | Out-Null
-      $path = Join-Path $dir "status.json"
-      $obj = [ordered]@{
-        State = $State
-        LastHeartbeatUTC = $utc
-        LastErrorUTC = $LastErrorUTC
-        Host = $env:COMPUTERNAME
-        User = $env:USERNAME
-        PID  = $PID
-        TrayScript = "$PSCommandPath"
-      }
-      ($obj | ConvertTo-Json -Depth 3) | Set-Content -Encoding UTF8 -LiteralPath $path
-    } catch {}
-  }
-
-  # Best-effort: call once immediately (then again from heartbeat if you add one later).
-  Write-CoGuardianStatusJson
-} catch {}
-
-
-
-
-
+Log "STOP (should only happen on Exit)"

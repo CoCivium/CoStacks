@@ -1,20 +1,41 @@
+<# CoGuardianTray_Bootstrap (canonical)
+   - No prompts
+   - Logs to Downloads
+   - Launches resident tray process (CoGuardianTray.ps1)
+#>
 Set-StrictMode -Version Latest
-$ErrorActionPreference="SilentlyContinue"
-$ProgressPreference="SilentlyContinue"
+$ErrorActionPreference='Stop'
+$ProgressPreference='SilentlyContinue'
 
-$repoTray = Join-Path $PSScriptRoot "CoGuardianTray.ps1"
-$repoHelper = Join-Path $PSScriptRoot "Get-CoGuardianStatus.ps1"
+function NowUtc(){ (Get-Date).ToUniversalTime().ToString('yyyyMMddTHHmmssZ') }
+$log = Join-Path $env:USERPROFILE ("Downloads\CoGuardianTray_bootstrap__" + (NowUtc) + ".log.txt")
+function Log([string]$m){
+  $line = ("[{0}] {1}" -f (NowUtc), $m)
+  try { Add-Content -LiteralPath $log -Value $line -Encoding UTF8 } catch {}
+}
 
-$cacheDir = Join-Path $env:LOCALAPPDATA "CoCivium\CoGuardian\cache"
-New-Item -ItemType Directory -Force -Path $cacheDir | Out-Null
+try {
+  Log ("BOOT START log=" + $log)
+  $pwshExe = "C:\Program Files\WindowsApps\Microsoft.PowerShell_7.5.4.0_x64__8wekyb3d8bbwe\pwsh.exe"
+  $trayScript = Join-Path $PSScriptRoot "CoGuardianTray.ps1"
+  if(-not (Test-Path -LiteralPath $pwshExe)){ throw "Missing pwsh.exe at $pwshExe" }
+  if(-not (Test-Path -LiteralPath $trayScript)){ throw "Missing tray script at $trayScript" }
 
-$localTray = Join-Path $cacheDir "CoGuardianTray.ps1"
-$localHelper = Join-Path $cacheDir "Get-CoGuardianStatus.ps1"
+  $debug = ($env:COGUARDIAN_TRAY_DEBUG -eq '1')
+  $ws = if($debug){ 'Normal' } else { 'Hidden' }
 
-# Best-effort refresh from repo path (may be UNC); fail open to existing local copies.
-try { Copy-Item -LiteralPath $repoTray -Destination $localTray -Force } catch {}
-try { Copy-Item -LiteralPath $repoHelper -Destination $localHelper -Force } catch {}
+  Log ("Launching tray: pwsh=" + $pwshExe)
+  Log ("TrayScript=" + $trayScript)
+  Log ("WindowStyle=" + $ws)
 
-# Launch local tray hidden (STA). If local missing, fall back to repo tray.
-$trayToRun = (Test-Path -LiteralPath $localTray) ? $localTray : $repoTray
-Start-Process pwsh -WindowStyle Hidden -ArgumentList @("-NoProfile","-Sta","-ExecutionPolicy","Bypass","-File",$trayToRun) | Out-Null
+  Start-Process -FilePath $pwshExe -WindowStyle $ws -ArgumentList @(
+    '-NoProfile','-ExecutionPolicy','Bypass','-File',$trayScript,
+    '-LogPath', (Join-Path $env:USERPROFILE ("Downloads\CoGuardianTray__ACTIVE.log.txt"))
+  ) | Out-Null
+
+  Log "BOOT DONE"
+} catch {
+  Log ("BOOT ERROR: " + $_)
+  try { $_ | Out-String | Add-Content -LiteralPath $log -Encoding UTF8 } catch {}
+  throw
+}

@@ -1,0 +1,9 @@
+UTC=20260305T230230Z
+BASESHA=a785eff1b3311ecb9f166148c2618551d350393a
+AddedTray=tools\coguardian\tray\CoGuardianTray.ps1
+RewroteBootstrap=tools\coguardian\tray\CoGuardianTray_Bootstrap.ps1
+AddedRunbook=tools\costacks\runbooks\runbook.coguardian.tray.ps7.ps1
+UpdatedStartupLNK=C:\Users\rball\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\CoGuardianTray.lnk
+Intent=Make CoGuardian tray icon resident + logged; remove silent-fail; make startup deterministic.
+TrayProcessFound=True
+TrayProcessId=24264

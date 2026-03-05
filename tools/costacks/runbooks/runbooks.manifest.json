@@ -1,6 +1,6 @@
 {
   "schema": "costacks.runbooks.manifest.v1",
-  "updated_utc": "20260305T214302Z",
+  "updated_utc": "20260305T230228Z",
   "engine": "tools/costacks/runbooks/Invoke-CoStacksRunbook.ps1",
   "helper": "tools/costacks/runbooks/Write-CoPong.ps1",
   "runbooks": [
@@ -18,6 +18,15 @@
       "name": "coguardian.fix-watchdog",
       "file": "tools/costacks/runbooks/runbook.coguardian.fix-watchdog.ps1",
       "description": "Fix/verify CoGuardian Watchdog scheduled task (if present in repo)",
+      "supports": [
+        "Apply",
+        "Verify"
+      ]
+    },
+    {
+      "name": "coguardian.tray.ps7",
+      "file": "tools\\costacks\\runbooks\\runbook.coguardian.tray.ps7.ps1",
+      "description": "Launch/verify CoGuardian tray resident process",
       "supports": [
         "Apply",
         "Verify"
