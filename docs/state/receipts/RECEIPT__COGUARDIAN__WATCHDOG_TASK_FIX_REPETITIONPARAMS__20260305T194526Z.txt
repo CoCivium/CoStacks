@@ -1,0 +1,7 @@
+UTC=20260305T194526Z
+BASESHA=3839d8b475560f39224d5f649545ec632a38aba1
+Installer=tools\coguardian\watchdog\Install-CoGuardianWatchdogTask.ps1
+Verifier=tools\coguardian\watchdog\Verify-CoGuardianWatchdogTask.ps1
+TaskName=CoCivium.CoGuardian.Watchdog
+Fix=Use New-ScheduledTaskTrigger -Once -RepetitionInterval/-RepetitionDuration params (avoids missing .RepetitionInterval property).
+Intent=Install+verify must be real; no false DONE.
