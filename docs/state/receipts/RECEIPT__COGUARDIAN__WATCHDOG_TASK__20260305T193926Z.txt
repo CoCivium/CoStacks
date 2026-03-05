@@ -1,0 +1,7 @@
+UTC=20260305T193926Z
+BASESHA=045ed673313b39f148a32554991fc13e776e1247
+Watchdog=tools\coguardian\watchdog\Invoke-CoGuardianWatchdog.ps1
+Installer=tools\coguardian\watchdog\Install-CoGuardianWatchdogTask.ps1
+TaskName=CoCivium.CoGuardian.Watchdog
+Intent=Self-heal: if tray missing or heartbeat stale (>120s), relaunch bootstrap hidden.
+Log=%LOCALAPPDATA%\CoCivium\CoGuardian\watchdog.log
