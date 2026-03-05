@@ -1,0 +1,10 @@
+﻿UTC=20260305T050814Z
+Repo=\\Server\CoCiviumAdmin\CoVault\CoCiviumAdmin\_Work\repos\CoStacks
+MergedMainSHA=c9950ac446b11c65a03dbb9cd69ee93ff1acc703
+MergedFromBranch=prime/handoff-anchor/20260304T194444Z
+MergedFromBranchSHA=a73095991e19b4a94429de10689e60528ba52461
+AnchorRel=docs/state/STATE_ANCHOR__PRIME__260216__TO__260304__20260304T194444Z.md
+PacketRel=docs/state/HANDOFF_PACKET__PRIME__260304__20260304T194444Z.md
+StartupShortcut=C:\Users\rball\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\CoStacks-CoGuardian-Tray.lnk
+ShortcutTarget=C:\Program Files\WindowsApps\Microsoft.PowerShell_7.5.4.0_x64__8wekyb3d8bbwe\pwsh.exe
+ShortcutArgs=-NoProfile -Sta -ExecutionPolicy Bypass -File \\Server\CoCiviumAdmin\CoVault\CoCiviumAdmin\_Work\repos\CoStacks\tools\coguardian\tray\..\..\..\tools\coguardian\tray\CoGuardianTray.ps1
