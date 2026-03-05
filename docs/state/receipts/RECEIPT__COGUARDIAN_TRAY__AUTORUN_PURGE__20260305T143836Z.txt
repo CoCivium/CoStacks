@@ -1,0 +1,9 @@
+UTC=20260305T143836Z
+BaseSHA=8d4c933b7d5126cee3db82d1aad9ba57feb32246
+KilledTrayProcesses=pwsh.exe:16056,pwsh.exe:10544
+RemovedRunEntries=
+RemovedScheduledTasks=
+ClearedStartupApproved=
+StartupLinkKept=C:\Users\rball\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\CoGuardianTray.lnk
+TrayScript=tools\coguardian\tray\CoGuardianTray.ps1
+ObservedTrayProcessInstancesAfterRelaunch=1
