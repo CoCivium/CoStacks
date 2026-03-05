@@ -1,0 +1,6 @@
+UTC=20260305T202101Z
+BASESHA=33c40e8a33fd0eb0e2fd86a74cabe86c280135ee
+Watchdog=tools\coguardian\watchdog\Invoke-CoGuardianWatchdog.ps1
+Installer=tools\coguardian\watchdog\Install-CoGuardianWatchdogTask.ps1
+Fix=Watchdog parses heartbeat robustly (ISO=>UTC, non-ISO=>LOCAL->UTC) and rejects negative age; installer runs pwsh hidden and sets task Hidden.
+Note=This fixes the false-green negative ageSec and likely reduces PS7 popup flashes.
