@@ -1,3 +1,4 @@
+# COGUARDIAN_PATCH__HEARTBEAT_UTC__V1
 # COGUARDIAN_PATCH__TRAY_TELEMETRY__V3_1
 # Telemetry log: %LOCALAPPDATA%\CoCivium\CoGuardian\tray_telemetry.log
 function CoGuardian_TelemetryPath {
@@ -129,7 +130,7 @@ function Set-CoGState {
 }
 
 function Touch-Heartbeat {
-  $script:CoGuardian.LastHeartbeatUTC = (Get-Date).ToUniversalTime().ToString('yyyyMMddTHHmmssZ')
+  $script:CoGuardian.LastHeartbeatUTC = ((Get-Date).ToUniversalTime().ToString('o')).ToUniversalTime().ToString('yyyyMMddTHHmmssZ')
 }
 
 function Touch-Error {
@@ -322,6 +323,7 @@ try {
   # Best-effort: call once immediately (then again from heartbeat if you add one later).
   Write-CoGuardianStatusJson
 } catch {}
+
 
 
 

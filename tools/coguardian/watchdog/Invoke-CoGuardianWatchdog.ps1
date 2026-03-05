@@ -1,3 +1,4 @@
+# COGUARDIAN_PATCH__WATCHDOG_REJECT_NEGATIVE_AGE__V1
 Set-StrictMode -Version Latest
 $ErrorActionPreference='Stop'
 $ProgressPreference='SilentlyContinue'
@@ -123,7 +124,7 @@ try {
   if($st.LastHeartbeatUTC){
     $hb=[datetime]::Parse([string]$st.LastHeartbeatUTC).ToUniversalTime()
     $age=((NowUtc)-$hb).TotalSeconds
-    if($age -le $MaxHeartbeatAgeSec){ $hbOk=$true }
+    if(($age -ge 0) -and ($age -le $MaxHeartbeatAgeSec)){ $hbOk=$true } else { if($age -lt 0){ Log ("CLOCK_SKEW heartbeat-in-future ageSec=" + $age) } }
     Log ("HB ageSec={0:n1} ok={1}" -f $age,$hbOk)
   } else {
     Log "HB missing in status.json"
@@ -160,3 +161,4 @@ try {
     ) | Set-Content -LiteralPath $diag -Encoding UTF8
   } catch { }
 }
+

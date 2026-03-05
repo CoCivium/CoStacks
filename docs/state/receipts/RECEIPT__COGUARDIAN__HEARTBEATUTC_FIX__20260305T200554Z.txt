@@ -1,0 +1,6 @@
+UTC=20260305T200554Z
+BASESHA=ce43c5dbfcdd8c2689c96ca96bf28370eb025e9a
+TrayRepo=tools\coguardian\tray\CoGuardianTray.ps1
+TrayCache=C:\Users\rball\AppData\Local\CoCivium\CoGuardian\cache\CoGuardianTray.ps1
+Watchdog=tools\coguardian\watchdog\Invoke-CoGuardianWatchdog.ps1
+Fix=Producer writes LastHeartbeatUTC as UTC ISO8601; consumer treats negative age as CLOCK_SKEW and hbOk=false.
