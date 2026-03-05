@@ -1,0 +1,6 @@
+UTC=20260305T191939Z
+BASESHA=e94fc9f3eff0915706ab9aed238a04cf4a15bec1
+RepoTray=tools\coguardian\tray\CoGuardianTray.ps1
+CacheTray=C:\Users\rball\AppData\Local\CoCivium\CoGuardian\cache\CoGuardianTray.ps1
+TelemetryLog=%LOCALAPPDATA%\CoCivium\CoGuardian\tray_telemetry.log
+Intent=Fix V3 expansion bug; patch repo+cache; write BOOT line; wrap Start-Process token as CoGuardian_SP.

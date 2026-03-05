@@ -1,3 +1,30 @@
+# COGUARDIAN_PATCH__TRAY_TELEMETRY__V3_1
+# Telemetry log: %LOCALAPPDATA%\CoCivium\CoGuardian\tray_telemetry.log
+function CoGuardian_TelemetryPath {
+  try { return (Join-Path $env:LOCALAPPDATA 'CoCivium\CoGuardian\tray_telemetry.log') } catch { return $null }
+}
+function CoGuardian_Log {
+  param([string]$Msg)
+  try {
+    $p = CoGuardian_TelemetryPath
+    if(-not $p){ return }
+    $dir = Split-Path $p -Parent
+    if(-not (Test-Path -LiteralPath $dir)){ New-Item -ItemType Directory -Force -Path $dir | Out-Null }
+    $ts = (Get-Date).ToUniversalTime().ToString('o')
+    Add-Content -LiteralPath $p -Encoding UTF8 -Value ("[{0}] {1}" -f $ts, $Msg)
+  } catch { }
+}
+# Create log early (proves we're running THIS script copy)
+try { CoGuardian_Log ("BOOT: tray script running: " + $MyInvocation.MyCommand.Path) } catch { }
+function CoGuardian_SP {
+  param([Parameter(ValueFromRemainingArguments=$true)][object[]]$Args)
+  try {
+    $joined = ($Args | ForEach-Object { [string]$PSItem }) -join ' '
+    CoGuardian_Log ("SPAWN_TOKEN: Start-Process " + $joined)
+  } catch { }
+  try { Start-Process @Args | Out-Null } catch { try { CoGuardian_Log ("SPAWN_FAIL: " + $_.Exception.Message) } catch { } }
+}
+
 # COGUARDIAN_PATCH__TRAY_TELEMETRY__V2
 # Telemetry log: %LOCALAPPDATA%\CoCivium\CoGuardian\tray_telemetry.log
 function CoGuardian_TelemetryPath {
@@ -21,7 +48,7 @@ function CoGuardian_OpenLocalFolder {
     $p = Join-Path $env:LOCALAPPDATA 'CoCivium\CoGuardian'
     if(-not (Test-Path -LiteralPath $p)){ New-Item -ItemType Directory -Force -Path $p | Out-Null }
     CoGuardian_Log ("SPAWN_LINE: Start-Process explorer.exe -ArgumentList @(""$p"") | Out-Null".Trim());
-    Start-Process explorer.exe -ArgumentList @(""$p"") | Out-Null
+    CoGuardian_SP explorer.exe -ArgumentList @(""$p"") | Out-Null
   } catch {
     try { [System.Windows.Forms.MessageBox]::Show("CoGuardian: couldn't open local folder. Path: $env:LOCALAPPDATA\CoCivium\CoGuardian","CoGuardian") | Out-Null } catch {}
   }
@@ -218,7 +245,7 @@ if(-not $sha){
   [System.Windows.Forms.MessageBox]::Show("Missing CoBusMirror SHA. Expected: $shaFile")
 } else {
   CoGuardian_Log ("SPAWN_LINE: Start-Process pwsh -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File',$scan,'-CoBusMirrorSha',$sha) -WorkingDirectory $repoTop".Trim());
-  Start-Process pwsh -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File',$scan,'-CoBusMirrorSha',$sha) -WorkingDirectory $repoTop
+  CoGuardian_SP pwsh -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File',$scan,'-CoBusMirrorSha',$sha) -WorkingDirectory $repoTop
 }
     } else {
       [System.Windows.Forms.MessageBox]::Show("scan.ps1 not found at: $scan")
@@ -295,6 +322,7 @@ try {
   # Best-effort: call once immediately (then again from heartbeat if you add one later).
   Write-CoGuardianStatusJson
 } catch {}
+
 
 
 
