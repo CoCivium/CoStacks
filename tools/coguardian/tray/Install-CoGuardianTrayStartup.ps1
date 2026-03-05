@@ -30,7 +30,7 @@ $trigger  = New-ScheduledTaskTrigger -AtLogOn
 
 # Use explicit DOMAIN\USER if available; fallback to USERNAME.
 $userId = if($env:USERDOMAIN){ "$($env:USERDOMAIN)\$($env:USERNAME)" } else { $env:USERNAME }
-$principal = New-ScheduledTaskPrincipal -UserId $userId -LogonType Interactive -RunLevel LeastPrivilege
+$principal = New-ScheduledTaskPrincipal -UserId $userId -LogonType Interactive -RunLevel Limited
 
 $settings = New-ScheduledTaskSettingsSet `
   -AllowStartIfOnBatteries `
@@ -47,3 +47,4 @@ Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger -Pr
 
 Write-Host "OK Installed Scheduled Task: $taskName"
 Write-Host "Test now: schtasks /Run /TN `"$taskName`""
+
