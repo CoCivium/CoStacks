@@ -1,6 +1,12 @@
 param([Parameter(Mandatory=$true)]$Context)
 
 Set-StrictMode -Version Latest
+
+# COSTACKS_PATCH__UX_RUNBOOK_CONTEXT_DEFAULT__V2
+if([string]::IsNullOrWhiteSpace($Context)){
+  $Context = $env:COSTACKS_CONTEXT
+  if([string]::IsNullOrWhiteSpace($Context)){ $Context = 'CoStacks.UX.PS7' }
+}
 $ErrorActionPreference='Stop'
 $ProgressPreference='SilentlyContinue'
 
@@ -47,3 +53,4 @@ function global:prompt {
 Set-Content -LiteralPath $prof -Encoding UTF8 -Value ($existing + "`r`n" + $patch + "`r`n")
 Dot "Patched PS7 prompt in: $prof"
 Dot "NOTE: cursor shape is terminal-controlled (Windows Terminal). We can ship a WT fragment next if you want."
+

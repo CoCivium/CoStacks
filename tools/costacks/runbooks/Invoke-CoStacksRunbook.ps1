@@ -1,8 +1,9 @@
-<# CoStacks Runbook Engine (canonical)
-   Rule: param() MUST be the first non-comment statement in the file.
-#>
 param(
-  [Parameter(Mandatory=$true)][string]$Name,
+
+  [Parameter(Mandatory=$true,
+  [Parameter(Mandatory=$false)][string]$Context
+)
+][string]$Name,
   [Parameter(Mandatory=$false)][switch]$Apply,
   [Parameter(Mandatory=$false)][switch]$Verify,
   [Parameter(Mandatory=$false)][string]$RepoRoot
@@ -37,6 +38,11 @@ if(-not (Test-Path -LiteralPath $runbook)){
 if(-not (Get-Command Invoke-Runbook -ErrorAction SilentlyContinue)){
   Fail ("Runbook does not define Invoke-Runbook: {0}" -f $runbookRel)
 }
-
-Invoke-Runbook -RepoRoot $RepoRoot -Apply:$Apply.IsPresent -Verify:$Verify.IsPresent
+$rbCmd = Get-Command Invoke-Runbook -ErrorAction Stop
+if($rbCmd.Parameters.ContainsKey("Context")){
+  Invoke-Runbook -RepoRoot $RepoRoot -Apply:$Apply.IsPresent -Verify:$Verify.IsPresent -Context $Context
+} else {
+  Invoke-Runbook -RepoRoot $RepoRoot -Apply:$Apply.IsPresent -Verify:$Verify.IsPresent
+}
 Dot "READY"
+

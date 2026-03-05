@@ -1,0 +1,5 @@
+UTC=20260305T210446Z
+BASESHA=7b959558f99ffa1edf97a7f8957b2419a2df1554
+Changed=tools\costacks\runbooks\Invoke-CoStacksRunbook.ps1
+Changed2=tools\costacks\runbooks\runbook.ux.ps7.ps1
+Fix=Avoid -replace scriptblock param collisions; add optional Context param + capability-check pass; UX runbook defaults Context from env or deterministic string.
