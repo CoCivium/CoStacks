@@ -1,0 +1,5 @@
+UTC=20260305T205552Z
+BASESHA=59eeb9bc4ef45fac0c35f236f93ea38b427d58b4
+Changed=tools\costacks\runbooks\Invoke-CoStacksRunbook.ps1
+Fix=Rewrite runbook engine so param() is first non-comment statement; adds canonical runbook contract Invoke-Runbook.
+Watchdog=Disabled to stop popups until verify.
