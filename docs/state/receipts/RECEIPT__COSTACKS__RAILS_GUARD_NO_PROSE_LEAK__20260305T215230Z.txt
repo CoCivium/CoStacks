@@ -1,0 +1,4 @@
+UTC=20260305T215230Z
+BASESHA=3da99466daf93699d935154b89063949b13f4fb7
+Added=tools\costacks\runbooks\Assert-CoNoProseLeak.ps1
+Intent=Prevent prose leaking into executable DO blocks (rails guard).
