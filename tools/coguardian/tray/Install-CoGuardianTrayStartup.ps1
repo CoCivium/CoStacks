@@ -1,4 +1,4 @@
-# Reversible (no admin): installs a per-user Startup shortcut that launches CoGuardianTray at logon.
+﻿# Reversible (no admin): installs a per-user Startup shortcut that launches CoGuardianTray at logon.
 param(
   [string]$RepoRoot = "$PSScriptRoot\..\..\.."
 )
@@ -9,7 +9,7 @@ $ErrorActionPreference='Stop'
 function Fail([string]$m){ throw "FAIL: $m" }
 
 $RepoRoot = (Resolve-Path -LiteralPath $RepoRoot).Path
-$tray = Join-Path $RepoRoot 'tools\coguardian\tray\CoGuardianTray.ps1'
+$tray = (Resolve-Path -LiteralPath (Join-Path $RepoRoot 'tools\coguardian\tray\CoGuardianTray.ps1')).Path
 if(-not (Test-Path -LiteralPath $tray)){ Fail "Missing tray: $tray" }
 
 $pwsh = (Get-Command pwsh -ErrorAction Stop).Source
@@ -20,8 +20,7 @@ if(-not (Test-Path -LiteralPath $startupDir)){ Fail "Startup folder not found: $
 $lnkPath = Join-Path $startupDir 'CoStacks-CoGuardian-Tray.lnk'
 
 # Shortcut target = pwsh, args = run tray file
-$args = @('-NoProfile','-ExecutionPolicy','Bypass','-File', $tray)
-
+$args = @('-NoProfile','-Sta','-ExecutionPolicy','Bypass','-File', $tray)
 # Build argument string with quoting where needed
 $argStr = ($args | ForEach-Object {
   $s = [string]$_
@@ -42,3 +41,5 @@ Write-Host "OK Installed Startup shortcut:"
 Write-Host "  $lnkPath"
 Write-Host "Test now by launching the shortcut (Explorer -> Startup folder) or run:"
 Write-Host "  `"$pwsh`" $argStr"
+
+
