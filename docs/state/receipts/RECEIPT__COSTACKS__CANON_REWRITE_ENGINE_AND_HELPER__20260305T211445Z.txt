@@ -1,0 +1,5 @@
+UTC=20260305T211445Z
+BASESHA=5e2519128a7fb0433b5057b31a522852d473ff8c
+Changed=tools\costacks\runbooks\Invoke-CoStacksRunbook.ps1
+Changed2=tools\costacks\runbooks\Write-CoPong.ps1
+Fix=Canonical rewrite (param top) to end param/parser chaos; helper proven via pwsh -File.

@@ -1,6 +1,3 @@
-Set-StrictMode -Version Latest
-$ErrorActionPreference='Stop'
-
 param(
   [Parameter(Mandatory=$true)][string]$From,
   [Parameter(Mandatory=$true)][string]$Utc,
@@ -12,7 +9,10 @@ param(
   [Parameter(Mandatory=$false)][string]$To = 'ALL_ACTIVE_SESSIONS'
 )
 
-# Build without string interpolation so any $ chars are literal.
+Set-StrictMode -Version Latest
+$ErrorActionPreference='Stop'
+
+# Build without interpolation; any $ chars remain literal.
 $parts = New-Object System.Collections.Generic.List[string]
 $parts.Add('<# CoPong | TO=' + $To)
 $parts.Add('FROM=' + $From)
