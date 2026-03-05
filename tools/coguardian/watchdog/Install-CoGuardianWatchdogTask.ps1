@@ -15,16 +15,16 @@ if($pwsh){
   $args = "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$script`""
 }
 
-# Start ~1 minute from now; repeat every 1 minute for 1 day.
-# NOTE: Task Scheduler does not accept “infinite” repetition durations; supervisor can be re-installed/renewed if needed.
+# Start ~1 minute from now; repeat every 1 minute for 1 day (renewable).
 $start = (Get-Date).AddMinutes(1)
 
 $action  = New-ScheduledTaskAction -Execute $exe -Argument $args
 $trigger = New-ScheduledTaskTrigger -Once -At $start -RepetitionInterval (New-TimeSpan -Minutes 1) -RepetitionDuration (New-TimeSpan -Days 1)
 
-$settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -MultipleInstances IgnoreNew
+# Stability-first: prevent long-run weirdness
+$settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -MultipleInstances IgnoreNew -ExecutionTimeLimit (New-TimeSpan -Hours 1)
 
 try { Unregister-ScheduledTask -TaskName $taskName -Confirm:$false -ErrorAction SilentlyContinue } catch {}
 
-Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger -Settings $settings -Description "CoGuardian watchdog: restarts tray/bootstrap if heartbeat stale or tray missing." | Out-Null
+Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger -Settings $settings -Description "CoGuardian watchdog: restarts tray/bootstrap if heartbeat stale or tray missing (throttled + quarantine)." | Out-Null
 Write-Host "Installed scheduled task: $taskName"

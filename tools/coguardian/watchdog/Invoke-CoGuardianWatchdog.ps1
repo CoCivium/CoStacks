@@ -2,88 +2,161 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference='Stop'
 $ProgressPreference='SilentlyContinue'
 
-function Log([string]$m){
-  try{
-    $p = Join-Path $env:LOCALAPPDATA 'CoCivium\CoGuardian\watchdog.log'
-    $dir = Split-Path $p -Parent
-    if(-not (Test-Path -LiteralPath $dir)){ New-Item -ItemType Directory -Force -Path $dir | Out-Null }
-    $ts=(Get-Date).ToUniversalTime().ToString('o')
-    Add-Content -LiteralPath $p -Encoding UTF8 -Value ("[{0}] {1}" -f $ts,$m)
-  } catch {}
+function NowUtc { (Get-Date).ToUniversalTime() }
+function J([object]$o){ $o | ConvertTo-Json -Depth 8 }
+
+$root = Join-Path $env:LOCALAPPDATA "CoCivium\CoGuardian"
+New-Item -ItemType Directory -Force -Path $root | Out-Null
+
+$log = Join-Path $root "watchdog.log"
+$statusPath = Join-Path $root "status.json"
+$quarantinePath = Join-Path $root "watchdog_quarantine.json"
+$diagDir = Join-Path $root "diag"
+New-Item -ItemType Directory -Force -Path $diagDir | Out-Null
+
+function Log([string]$msg){
+  try {
+    $ts = (NowUtc).ToString('o')
+    Add-Content -LiteralPath $log -Encoding UTF8 -Value ("[{0}] {1}" -f $ts, $msg)
+  } catch { }
 }
 
-function ParseUtc([string]$s){
-  if([string]::IsNullOrWhiteSpace($s)){ return $null }
-  try { return [DateTime]::Parse($s, [Globalization.CultureInfo]::InvariantCulture, [Globalization.DateTimeStyles]::AssumeUniversal).ToUniversalTime() } catch { return $null }
+# Policy knobs
+$MaxHeartbeatAgeSec = 120
+$MaxRestartsInWindow = 5
+$WindowMinutes = 10
+$QuarantineMinutes = 30
+
+function InQuarantine {
+  if(-not (Test-Path -LiteralPath $quarantinePath)){ return $false }
+  try {
+    $q = Get-Content -LiteralPath $quarantinePath -Raw -Encoding UTF8 | ConvertFrom-Json
+    if(-not $q.UntilUTC){ return $false }
+    $until = [datetime]::Parse($q.UntilUTC).ToUniversalTime()
+    return ((NowUtc) -lt $until)
+  } catch { return $false }
 }
+
+function EnterQuarantine([string]$reason){
+  try {
+    $until = (NowUtc).AddMinutes($QuarantineMinutes).ToString('o')
+    $obj = [ordered]@{
+      EnteredUTC=(NowUtc).ToString('o')
+      UntilUTC=$until
+      Reason=$reason
+    }
+    $obj | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $quarantinePath -Encoding UTF8
+    Log ("QUARANTINE Entered until {0} Reason={1}" -f $until,$reason)
+  } catch { }
+}
+
+function RestartBudgetOk {
+  # Track restarts in a rolling window
+  $histPath = Join-Path $root "watchdog_restart_history.json"
+  $now = NowUtc
+  $cut = $now.AddMinutes(-1*$WindowMinutes)
+
+  $items=@()
+  if(Test-Path -LiteralPath $histPath){
+    try { $items = @(Get-Content -LiteralPath $histPath -Raw -Encoding UTF8 | ConvertFrom-Json) } catch { $items=@() }
+  }
+  # keep only recent
+  $items = @($items | Where-Object {
+    try { ([datetime]::Parse($_.UTC).ToUniversalTime() -ge $cut) } catch { $false }
+  })
+  if(@($items).Count -ge $MaxRestartsInWindow){
+    EnterQuarantine ("Restart limit exceeded: {0} in {1}m" -f @($items).Count,$WindowMinutes)
+    return $false
+  }
+  # append pending restart marker
+  $items = @($items + ([pscustomobject]@{ UTC=$now.ToString('o') }))
+  try { $items | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $histPath -Encoding UTF8 } catch { }
+  return $true
+}
+
+function GetStatus {
+  if(-not (Test-Path -LiteralPath $statusPath)){ return $null }
+  try { return (Get-Content -LiteralPath $statusPath -Raw -Encoding UTF8 | ConvertFrom-Json) } catch { return $null }
+}
+
+function TrayProcessOk([string]$trayScriptPath){
+  if(-not $trayScriptPath){ return $false }
+  try {
+    $cands = Get-CimInstance Win32_Process |
+      Where-Object {
+        ($_.Name -in @('pwsh.exe','powershell.exe')) -and
+        ($_.CommandLine -match [regex]::Escape($trayScriptPath))
+      }
+    return (@($cands).Count -ge 1)
+  } catch { return $false }
+}
+
+function StartBootstrap {
+  $boot = Join-Path $PSScriptRoot "..\tray\CoGuardianTray_Bootstrap.ps1" | Resolve-Path -ErrorAction SilentlyContinue
+  if(-not $boot){ throw "Missing bootstrap (relative): tools\coguardian\tray\CoGuardianTray_Bootstrap.ps1" }
+  $ps1 = "$env:WINDIR\System32\WindowsPowerShell\v1.0\powershell.exe"
+  Start-Process $ps1 -WindowStyle Hidden -ArgumentList @(
+    "-NoProfile","-WindowStyle","Hidden","-ExecutionPolicy","Bypass",
+    "-File",$boot.Path
+  ) | Out-Null
+}
+
+Log "TICK"
+
+if(InQuarantine){
+  Log "QUARANTINE Active: skipping restart attempts."
+  return
+}
+
+$st = GetStatus
+if(-not $st){
+  Log "STATUS Missing/unreadable; will attempt bootstrap restart."
+  if(RestartBudgetOk){
+    try { StartBootstrap; Log "RESTART bootstrap (reason=status-missing)"; } catch { Log ("RESTART_FAIL " + $_.Exception.Message) }
+  }
+  return
+}
+
+# Heartbeat freshness
+$hbOk=$false
+try {
+  if($st.LastHeartbeatUTC){
+    $hb=[datetime]::Parse([string]$st.LastHeartbeatUTC).ToUniversalTime()
+    $age=((NowUtc)-$hb).TotalSeconds
+    if($age -le $MaxHeartbeatAgeSec){ $hbOk=$true }
+    Log ("HB ageSec={0:n1} ok={1}" -f $age,$hbOk)
+  } else {
+    Log "HB missing in status.json"
+  }
+} catch {
+  Log ("HB parse error: " + $_.Exception.Message)
+}
+
+$trayOk = TrayProcessOk ([string]$st.TrayScript)
+Log ("TRAY_PROCESS ok={0} TrayScript={1}" -f $trayOk,[string]$st.TrayScript)
+
+if($hbOk -and $trayOk){
+  return
+}
+
+# Attempt restart
+if(-not (RestartBudgetOk)){ return }
 
 try {
-  $status = Join-Path $env:LOCALAPPDATA 'CoCivium\CoGuardian\status.json'
-  $boot   = Join-Path $env:LOCALAPPDATA 'CoCivium\CoGuardian\cache\CoGuardianTray_Bootstrap.ps1'
-  $fallbackBoot = Join-Path '\\Server\CoCiviumAdmin\CoVault\CoCiviumAdmin\_Work\repos\CoStacks' 'tools\coguardian\tray\CoGuardianTray_Bootstrap.ps1'
-
-  $now = (Get-Date).ToUniversalTime()
-  $maxAgeSec = 120
-
-  $trayScript = $null
-  $hbUtc = $null
-
-  if(Test-Path -LiteralPath $status){
-    try{
-      $st = Get-Content -LiteralPath $status -Raw -Encoding UTF8 | ConvertFrom-Json
-      $trayScript = [string]$st.TrayScript
-      $hbUtc = ParseUtc ([string]$st.LastHeartbeatUTC)
-    } catch {
-      Log ("STATUS_PARSE_FAIL: " + $_.Exception.Message)
-    }
-  } else {
-    Log "STATUS_MISSING"
-  }
-
-  $hbAge = $null
-  if($hbUtc){
-    $hbAge = [int]([Math]::Floor(($now - $hbUtc).TotalSeconds))
-  }
-
-  # Is tray process running?
-  $trayRunning = $false
-  if($trayScript -and (Test-Path -LiteralPath $trayScript)){
-    try {
-      $p = Get-CimInstance Win32_Process |
-        Where-Object { ($_.Name -in @('pwsh.exe','powershell.exe')) -and ($_.CommandLine -match [regex]::Escape($trayScript)) } |
-        Select-Object -First 1
-      if($p){ $trayRunning = $true }
-    } catch {}
-  }
-
-  $needRestart = $false
-  if(-not $trayRunning){ $needRestart = $true }
-  if(-not $hbUtc){ $needRestart = $true }
-  if($hbAge -ne $null -and $hbAge -gt $maxAgeSec){ $needRestart = $true }
-
-  if(-not $needRestart){
-    # quiet success
-    return
-  }
-
-  Log ("RESTART_NEEDED trayRunning={0} hbUtc={1} hbAgeSec={2}" -f $trayRunning,$hbUtc,$hbAge)
-
-  # Choose bootstrap path
-  $useBoot = $null
-  if(Test-Path -LiteralPath $boot){ $useBoot = $boot }
-  elseif(Test-Path -LiteralPath $fallbackBoot){ $useBoot = $fallbackBoot }
-
-  if(-not $useBoot){
-    Log "BOOTSTRAP_MISSING (no cache bootstrap and no repo bootstrap)"
-    return
-  }
-
-  Start-Process "$env:WINDIR\System32\WindowsPowerShell\v1.0\powershell.exe" -WindowStyle Hidden -ArgumentList @(
-    "-NoProfile","-WindowStyle","Hidden","-ExecutionPolicy","Bypass",
-    "-File",$useBoot
-  ) | Out-Null
-
-  Log ("RELAUNCHED via " + $useBoot)
+  StartBootstrap
+  Log ("RESTART bootstrap (reason=hbOk:{0} trayOk:{1})" -f $hbOk,$trayOk)
 } catch {
-  try { Log ("WATCHDOG_FAIL: " + $_.Exception.Message) } catch {}
+  Log ("RESTART_FAIL " + $_.Exception.Message)
+  # write a small diag snapshot
+  try {
+    $utc=(NowUtc).ToString("yyyyMMddTHHmmssZ")
+    $diag = Join-Path $diagDir "DIAG__WATCHDOG_RESTART_FAIL__${utc}.txt"
+    @(
+      "UTC=$utc"
+      "Reason=RestartFail"
+      "TrayScript=$([string]$st.TrayScript)"
+      "LastHeartbeatUTC=$([string]$st.LastHeartbeatUTC)"
+      "Error=$($_.Exception.Message)"
+    ) | Set-Content -LiteralPath $diag -Encoding UTF8
+  } catch { }
 }

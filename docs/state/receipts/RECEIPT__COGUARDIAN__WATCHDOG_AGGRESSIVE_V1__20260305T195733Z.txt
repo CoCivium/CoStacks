@@ -1,0 +1,6 @@
+UTC=20260305T195733Z
+BASESHA=b9848e5a96712fbe163a8913ed183c721bdc4a2c
+Invoke=tools\coguardian\watchdog/Invoke-CoGuardianWatchdog.ps1
+Installer=tools\coguardian\watchdog/Install-CoGuardianWatchdogTask.ps1
+Renew=tools\coguardian\watchdog/Renew-CoGuardianWatchdogTask.ps1
+Intent=Aggressive watchdog with restart throttle + quarantine; stability-first execution time limit; renewable repetition window.
