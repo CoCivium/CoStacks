@@ -1,0 +1,45 @@
+UTC=20260305T160435Z
+REPO=\\Server\CoCiviumAdmin\CoVault\CoCiviumAdmin\_Work\repos\CoStacks
+BASE_SHA=5b4c790f2e085f18a581f342abad3d665fbec50e
+
+=== TRAY SCRIPTS FOUND ===
+\\Server\CoCiviumAdmin\CoVault\CoCiviumAdmin\_Work\repos\CoStacks\tools\coguardian\tray\CoGuardianTray.ps1
+\\Server\CoCiviumAdmin\CoVault\CoCiviumAdmin\_Work\repos\CoStacks\tools\coguardian\tray\Install-CoGuardianTrayStartup.ps1
+\\Server\CoCiviumAdmin\CoVault\CoCiviumAdmin\_Work\repos\CoStacks\tools\coguardian\tray\Uninstall-CoGuardianTrayStartup.ps1
+
+=== RUNNING TRAY PROCESSES (CMDLINE MATCH) ===
+COUNT=1
+pwsh.exe PID=3292 "C:\Users\rball\AppData\Local\Microsoft\WindowsApps\pwsh.exe" -NoProfile -Sta -ExecutionPolicy Bypass -File \\Server\CoCiviumAdmin\CoVault\CoCiviumAdmin\_Work\repos\CoStacks\tools\coguardian\tray\CoGuardianTray.ps1 
+
+=== AUTORUN ENTRIES (RAW) ===
+STARTUP_LNK	CoGuardianTray.lnk	
+RUN_KEY	HKCU:\Software\Microsoft\Windows\CurrentVersion\Run:electron.app.Bitwarden	C:\Program Files\Bitwarden\Bitwarden.exe
+RUN_KEY	HKCU:\Software\Microsoft\Windows\CurrentVersion\Run:com.reolink.app	C:\Program Files\Reolink\Reolink.exe
+RUN_KEY	HKCU:\Software\Microsoft\Windows\CurrentVersion\Run:LenovoVantage	C:\ProgramData\Lenovo\Vantage\Addins\LenovoCompanionAppAddin\1.0.0.51\LenovoVantage.exe
+RUN_KEY	HKLM:\Software\Microsoft\Windows\CurrentVersion\Run:SecurityHealth	C:\WINDOWS\system32\SecurityHealthSystray.exe
+RUN_KEY	HKLM:\Software\Microsoft\Windows\CurrentVersion\Run:Logitech Download Assistant	C:\Windows\system32\rundll32.exe C:\Windows\System32\LogiLDA.dll,LogiFetch
+SCHED_TASK	(skip)	Get-ScheduledTask unavailable or access denied
+
+=== GREP TERM HIT COUNTS (TOP) ===
+68	ring
+41	CoGuard
+19	status
+13	System.Windows.Forms
+8	heartbeat
+5	4317
+4	LastHeartbeat
+3	extension
+3	progress
+2	NotifyIcon
+1	chrome.runtime
+1	WinForms
+1	WPF
+
+=== NEXT (EVIDENCE-BASED DEFAULT PLAN) ===
+1) If no local IPC/server exists (HttpListener/NamedPipe absent): add minimal localhost API (read-only status + event ingest).
+2) Add heartbeat log + 'LastHeartbeatUTC' surfaced in tooltip.
+3) Add explicit icon state machine (OK/WARN/FAIL + activity).
+4) Only then wire CoGuard extension handshake to the local API.
+
+CSV=docs/state/reports/REPORT__COGUARDIAN_AUDIT__20260305T160435Z.csv
+TXT=docs/state/reports/REPORT__COGUARDIAN_AUDIT__20260305T160435Z.txt
