@@ -1,10 +1,15 @@
-# Reversible: removes per-user Scheduled Task that launches CoGuardianTray on logon.
+# Reversible (no admin): removes the per-user Startup shortcut for CoGuardianTray.
 Set-StrictMode -Version Latest
 $ErrorActionPreference='Stop'
-$taskName = "CoStacks-CoGuardian-Tray"
-try {
-  Unregister-ScheduledTask -TaskName $taskName -Confirm:$false -ErrorAction Stop | Out-Null
-  Write-Host "OK Removed Scheduled Task: $taskName"
-} catch {
-  Write-Host "WARN Could not remove task (may not exist): $taskName :: " + $_.Exception.Message
+
+$startupDir = Join-Path $env:APPDATA 'Microsoft\Windows\Start Menu\Programs\Startup'
+$lnkPath = Join-Path $startupDir 'CoStacks-CoGuardian-Tray.lnk'
+
+if(Test-Path -LiteralPath $lnkPath){
+  Remove-Item -LiteralPath $lnkPath -Force
+  Write-Host "OK Removed Startup shortcut:"
+  Write-Host "  $lnkPath"
+} else {
+  Write-Host "WARN Startup shortcut not found (nothing to remove):"
+  Write-Host "  $lnkPath"
 }
