@@ -9,9 +9,12 @@ function LogLine([string]$path,[string]$m){
   try { Add-Content -LiteralPath $path -Value ("[{0}] {1}" -f (NowUtc), $m) -Encoding UTF8 } catch {}
 }
 
-# IMPORTANT: use ProviderPath (no "Microsoft.PowerShell.Core\FileSystem::" prefix)
-$RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..\..")).ProviderPath
-$TrayPath = Join-Path $RepoRoot "tools\coguardian\tray\CoGuardianTray.ps1"
+# Resolve repo root to a clean filesystem path (no provider prefix, no .. segments)
+$RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..\..\..")).ProviderPath
+
+# Build TrayPath, then resolve to eliminate any .. segments
+$TrayCandidate = Join-Path $RepoRoot "tools\coguardian\tray\CoGuardianTray.ps1"
+$TrayPath = (Resolve-Path -LiteralPath $TrayCandidate).ProviderPath
 
 $BootLog = Join-Path $env:USERPROFILE ("Downloads\CoGuardianTray_bootstrap__{0}.log.txt" -f (NowUtc))
 LogLine $BootLog ("BOOTSTRAP_START RepoRoot=" + $RepoRoot)
