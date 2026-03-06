@@ -1,0 +1,4 @@
+UTC=20260306T211206Z
+Fix=Template generator now writes literal $ variables without runtime interpolation
+Marker=}      # ⊂
+TransportRule=Trailing blank lines remain part of generated output

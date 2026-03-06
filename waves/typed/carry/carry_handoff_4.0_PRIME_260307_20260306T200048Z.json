@@ -1,0 +1,14 @@
+{
+  "type": "carry.note",
+  "id": "carry_handoff_4.0_PRIME_260307_20260306T200048Z",
+  "origin": "4.0|PRIME|260304",
+  "intent": "successor Prime bootstrap",
+  "payload": [
+    "Read architecture, inbox doctrine, handoff protocol, roadmap.",
+    "Treat Workflows as research feeder, not canonical memory.",
+    "Typed inbox architecture is now the core CoStacks coordination plane.",
+    "Remaining key gap: verified git rail and stronger health telemetry.",
+    "Next Prime may adopt .live sessions and Workflows as subsessions drained through repo artifacts."
+  ],
+  "created": "20260306T200048Z"
+}

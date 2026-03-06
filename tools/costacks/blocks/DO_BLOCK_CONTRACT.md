@@ -34,3 +34,12 @@ Nothing meaningful should appear **after** the executable block finishes, except
 
 ## Preferred ending
 A successful block should simply return to prompt.
+## Addendum: terminal-end visual cue
+- Prefer ENDS_AT_PROMPT=YES in the header.
+- Prefer the closing line as } # END when a visual delimiter helps.
+- Do not put meaningful footer text after the block.
+
+## Addendum: verified git rule
+- Never report push success from local HEAD alone.
+- Success requires git fetch origin and origin/main == HEAD after push.
+- If pull or push fails, the block must fail closed.

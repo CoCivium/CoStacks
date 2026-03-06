@@ -1,0 +1,5 @@
+UTC=20260306T212212Z
+Origin=4.0|PRIME|260304
+Added=docs/protocols/HANDOFF_GAP_AUDIT__4.0_PRIME_260304_TO_260307.md
+Added2=waves/typed/carry/carry_successor_delta_test_4.0_PRIME_260307_20260306T212212Z.json
+Intent=successor Prime should compare repo-only bootstrap against assisted bootstrap and use delta to improve rails
