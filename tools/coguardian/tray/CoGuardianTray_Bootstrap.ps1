@@ -9,7 +9,8 @@ function LogLine([string]$path,[string]$m){
   try { Add-Content -LiteralPath $path -Value ("[{0}] {1}" -f (NowUtc), $m) -Encoding UTF8 } catch {}
 }
 
-$RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..\..")).Path
+# IMPORTANT: use ProviderPath (no "Microsoft.PowerShell.Core\FileSystem::" prefix)
+$RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..\..")).ProviderPath
 $TrayPath = Join-Path $RepoRoot "tools\coguardian\tray\CoGuardianTray.ps1"
 
 $BootLog = Join-Path $env:USERPROFILE ("Downloads\CoGuardianTray_bootstrap__{0}.log.txt" -f (NowUtc))
@@ -22,8 +23,9 @@ if(-not (Test-Path -LiteralPath $TrayPath)){
 }
 
 function GetTrayProcs(){
+  $esc = [regex]::Escape($TrayPath)
   Get-CimInstance Win32_Process |
-    Where-Object { $_.Name -eq 'pwsh.exe' -and $_.CommandLine -match 'CoGuardianTray\.ps1' } |
+    Where-Object { $_.Name -eq 'pwsh.exe' -and $_.CommandLine -match $esc } |
     Select-Object ProcessId,CommandLine
 }
 
@@ -71,17 +73,17 @@ try {
   LogLine $BootLog ("ACTIVE_LOG_PRECREATE_ERROR " + $_.Exception.Message)
 }
 
-# Launch tray
+# Launch tray (force -STA)
 try {
   $pwshExe = (Get-Command pwsh -ErrorAction Stop).Source
   LogLine $BootLog ("PWSH=" + $pwshExe)
-  LogLine $BootLog "LAUNCH_TRAY"
+  LogLine $BootLog ("LAUNCH_TRAY")
   Start-Process -FilePath $pwshExe -WindowStyle Hidden -ArgumentList @(
     '-STA',
     '-NoProfile','-ExecutionPolicy','Bypass','-File',"$TrayPath",
     '-LogPath',"$Active"
   ) | Out-Null
-  LogLine $BootLog "LAUNCH_TRAY_OK"
+  LogLine $BootLog ("LAUNCH_TRAY_OK")
 } catch {
   LogLine $BootLog ("LAUNCH_TRAY_ERROR " + $_.Exception.Message)
   throw
