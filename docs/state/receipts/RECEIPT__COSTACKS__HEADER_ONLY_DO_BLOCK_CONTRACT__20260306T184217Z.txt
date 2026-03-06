@@ -1,0 +1,7 @@
+UTC=20260306T184217Z
+BASESHA=7a71942ba39389e1f6a8c2894b6a49280900d1d3
+Added=tools\costacks\blocks\DO_BLOCK_CONTRACT.md
+Added2=tools\costacks\blocks\New-CoDoBlockTemplate.ps1
+Added3=tools\costacks\blocks\EXAMPLE__HEADER_ONLY_DO_BLOCK.txt
+Intent=Codify header-only DO block strategy so operators do not need footer guidance.
+Rule=No meaningful text after executable block; guidance belongs in header.

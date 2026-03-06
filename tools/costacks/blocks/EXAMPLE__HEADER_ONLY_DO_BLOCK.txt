@@ -1,0 +1,7 @@
+<# DO [CoStacks.Example__HEADER_ONLY 20260306T000000Z] | INTENT=EXAMPLE | SUCCESS=Return to prompt with no footer guidance. | VIOLET=NO | WAIT_ONLY=YES #>
+& {
+Set-StrictMode -Version Latest
+$ErrorActionPreference = "Stop"
+
+"example ok" | Out-Host
+}
