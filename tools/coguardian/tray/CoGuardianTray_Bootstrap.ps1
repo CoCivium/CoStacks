@@ -14,8 +14,7 @@ $RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..\..\..")).Pro
 
 # Build TrayPath, then resolve to eliminate any .. segments
 $TrayCandidate = Join-Path $RepoRoot "tools\coguardian\tray\CoGuardianTray.ps1"
-$TrayPath = (Resolve-Path -LiteralPath $TrayCandidate).ProviderPath
-
+ $TrayPath = [IO.Path]::GetFullPath($TrayCandidate)
 $BootLog = Join-Path $env:USERPROFILE ("Downloads\CoGuardianTray_bootstrap__{0}.log.txt" -f (NowUtc))
 LogLine $BootLog ("BOOTSTRAP_START RepoRoot=" + $RepoRoot)
 LogLine $BootLog ("TrayPath=" + $TrayPath)
