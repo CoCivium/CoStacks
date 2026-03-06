@@ -77,6 +77,7 @@ try {
   LogLine $BootLog ("PWSH=" + $pwshExe)
   LogLine $BootLog "LAUNCH_TRAY"
   Start-Process -FilePath $pwshExe -WindowStyle Hidden -ArgumentList @(
+    '-STA',
     '-NoProfile','-ExecutionPolicy','Bypass','-File',"$TrayPath",
     '-LogPath',"$Active"
   ) | Out-Null
