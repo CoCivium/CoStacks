@@ -27,14 +27,12 @@ function GetTrayProcs(){
     Select-Object ProcessId,CommandLine
 }
 
-function HardKill([int]$pid){
-  try {
-    Stop-Process -Id $pid -Force -ErrorAction SilentlyContinue
-  } catch {}
+function HardKill([int]$procId){
+  try { Stop-Process -Id $procId -Force -ErrorAction SilentlyContinue } catch {}
   Start-Sleep -Milliseconds 150
   try {
-    if(Get-Process -Id $pid -ErrorAction SilentlyContinue){
-      & "$env:WINDIR\System32\taskkill.exe" /PID $pid /F /T | Out-Null
+    if(Get-Process -Id $procId -ErrorAction SilentlyContinue){
+      & "$env:WINDIR\System32\taskkill.exe" /PID $procId /F /T | Out-Null
     }
   } catch {}
 }
@@ -44,9 +42,10 @@ try {
   $procs = GetTrayProcs
   $cnt = ($procs | Measure-Object).Count
   LogLine $BootLog ("PRE_FOUND_TRAY_PROCS count=" + $cnt)
-  foreach($p in $procs){
-    LogLine $BootLog ("PRE_KILLING_PID=" + $p.ProcessId)
-    HardKill ([int]$p.ProcessId)
+  foreach($proc in $procs){
+    $procId = [int]$proc.ProcessId
+    LogLine $BootLog ("PRE_KILLING_PID=" + $procId)
+    HardKill $procId
   }
 } catch {
   LogLine $BootLog ("PRE_PROC_SCAN_ERROR " + $_.Exception.Message)
@@ -54,7 +53,7 @@ try {
 
 Start-Sleep -Milliseconds 500
 
-# ACTIVE LOG (precreate + rotate)
+# ACTIVE LOG (rotate + precreate)
 $Active = Join-Path $env:USERPROFILE "Downloads\CoGuardianTray__ACTIVE.log.txt"
 try {
   if(Test-Path -LiteralPath $Active){
@@ -74,10 +73,10 @@ try {
 
 # Launch tray
 try {
-  $pwsh = (Get-Command pwsh -ErrorAction Stop).Source
-  LogLine $BootLog ("PWSH=" + $pwsh)
+  $pwshExe = (Get-Command pwsh -ErrorAction Stop).Source
+  LogLine $BootLog ("PWSH=" + $pwshExe)
   LogLine $BootLog "LAUNCH_TRAY"
-  Start-Process -FilePath $pwsh -WindowStyle Hidden -ArgumentList @(
+  Start-Process -FilePath $pwshExe -WindowStyle Hidden -ArgumentList @(
     '-NoProfile','-ExecutionPolicy','Bypass','-File',"$TrayPath",
     '-LogPath',"$Active"
   ) | Out-Null
@@ -87,7 +86,7 @@ try {
   throw
 }
 
-Start-Sleep -Milliseconds 600
+Start-Sleep -Milliseconds 700
 
 # HARD DEDUPE (post-launch) -> keep newest
 try {
@@ -95,12 +94,13 @@ try {
   $cnt2 = ($procs2 | Measure-Object).Count
   LogLine $BootLog ("POST_FOUND_TRAY_PROCS count=" + $cnt2)
   if($cnt2 -gt 1){
-    $keep = (Get-Process -Id ($procs2.ProcessId) | Sort-Object StartTime -Descending | Select-Object -First 1).Id
-    LogLine $BootLog ("POST_KEEP_PID=" + $keep)
-    foreach($p in $procs2){
-      if([int]$p.ProcessId -ne [int]$keep){
-        LogLine $BootLog ("POST_KILLING_PID=" + $p.ProcessId)
-        HardKill ([int]$p.ProcessId)
+    $keepId = (Get-Process -Id ($procs2.ProcessId) | Sort-Object StartTime -Descending | Select-Object -First 1).Id
+    LogLine $BootLog ("POST_KEEP_PID=" + $keepId)
+    foreach($proc2 in $procs2){
+      $procId2 = [int]$proc2.ProcessId
+      if($procId2 -ne [int]$keepId){
+        LogLine $BootLog ("POST_KILLING_PID=" + $procId2)
+        HardKill $procId2
       }
     }
   }
