@@ -12,9 +12,10 @@ function LogLine([string]$path,[string]$m){
 # Resolve repo root to a clean filesystem path (no provider prefix, no .. segments)
 $RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..\..\..")).ProviderPath
 
-# Build TrayPath, then resolve to eliminate any .. segments
+# Build TrayPath (filesystem-clean); may still appear as .. in cmdline, so detection must not rely on exact path string
 $TrayCandidate = Join-Path $RepoRoot "tools\coguardian\tray\CoGuardianTray.ps1"
- $TrayPath = [IO.Path]::GetFullPath($TrayCandidate)
+$TrayPath = [IO.Path]::GetFullPath($TrayCandidate)
+
 $BootLog = Join-Path $env:USERPROFILE ("Downloads\CoGuardianTray_bootstrap__{0}.log.txt" -f (NowUtc))
 LogLine $BootLog ("BOOTSTRAP_START RepoRoot=" + $RepoRoot)
 LogLine $BootLog ("TrayPath=" + $TrayPath)
@@ -24,11 +25,16 @@ if(-not (Test-Path -LiteralPath $TrayPath)){
   throw "FAIL-CLOSED: Missing tray script at $TrayPath"
 }
 
+# Marker to make proc detection unambiguous
+$Marker = "-CoGuardianTray"
+
 function GetTrayProcs(){
-  $esc = [regex]::Escape($TrayPath)
-  Get-CimInstance Win32_Process |
-    Where-Object { $_.Name -eq 'pwsh.exe' -and $_.CommandLine -match $esc } |
-    Select-Object ProcessId,CommandLine
+  $procs = Get-CimInstance Win32_Process | Where-Object { $_.Name -eq 'pwsh.exe' }
+  $byMarker = @($procs | Where-Object { $_.CommandLine -match [regex]::Escape($Marker) })
+  if($byMarker.Count -gt 0){ return $byMarker | Select-Object ProcessId,CommandLine }
+
+  # fallback (legacy procs without marker)
+  return @($procs | Where-Object { $_.CommandLine -match 'CoGuardianTray\.ps1' }) | Select-Object ProcessId,CommandLine
 }
 
 function HardKill([int]$procId){
@@ -41,15 +47,14 @@ function HardKill([int]$procId){
   } catch {}
 }
 
-# HARD DEDUPE (pre-launch)
+# HARD DEDUPE (pre-launch): kill ALL tray procs we can see (marker or fallback)
 try {
-  $procs = GetTrayProcs
-  $cnt = ($procs | Measure-Object).Count
-  LogLine $BootLog ("PRE_FOUND_TRAY_PROCS count=" + $cnt)
-  foreach($proc in $procs){
-    $procId = [int]$proc.ProcessId
-    LogLine $BootLog ("PRE_KILLING_PID=" + $procId)
-    HardKill $procId
+  $procs = @(GetTrayProcs)
+  LogLine $BootLog ("PRE_FOUND_TRAY_PROCS count=" + $procs.Count)
+  foreach($p in $procs){
+    $pid = [int]$p.ProcessId
+    LogLine $BootLog ("PRE_KILLING_PID=" + $pid)
+    HardKill $pid
   }
 } catch {
   LogLine $BootLog ("PRE_PROC_SCAN_ERROR " + $_.Exception.Message)
@@ -75,14 +80,16 @@ try {
   LogLine $BootLog ("ACTIVE_LOG_PRECREATE_ERROR " + $_.Exception.Message)
 }
 
-# Launch tray (force -STA)
+# Launch tray (force -STA + marker)
 try {
   $pwshExe = (Get-Command pwsh -ErrorAction Stop).Source
   LogLine $BootLog ("PWSH=" + $pwshExe)
-  LogLine $BootLog ("LAUNCH_TRAY")
+  LogLine $BootLog ("LAUNCH_TRAY marker=" + $Marker)
   Start-Process -FilePath $pwshExe -WindowStyle Hidden -ArgumentList @(
     '-STA',
-    '-NoProfile','-ExecutionPolicy','Bypass','-File',"$TrayPath",
+    '-NoProfile','-ExecutionPolicy','Bypass',
+    $Marker,
+    '-File',"$TrayPath",
     '-LogPath',"$Active"
   ) | Out-Null
   LogLine $BootLog ("LAUNCH_TRAY_OK")
@@ -91,21 +98,20 @@ try {
   throw
 }
 
-Start-Sleep -Milliseconds 700
+Start-Sleep -Milliseconds 900
 
-# HARD DEDUPE (post-launch) -> keep newest
+# HARD DEDUPE (post-launch): keep newest, kill rest
 try {
-  $procs2 = GetTrayProcs
-  $cnt2 = ($procs2 | Measure-Object).Count
-  LogLine $BootLog ("POST_FOUND_TRAY_PROCS count=" + $cnt2)
-  if($cnt2 -gt 1){
+  $procs2 = @(GetTrayProcs)
+  LogLine $BootLog ("POST_FOUND_TRAY_PROCS count=" + $procs2.Count)
+  if($procs2.Count -gt 1){
     $keepId = (Get-Process -Id ($procs2.ProcessId) | Sort-Object StartTime -Descending | Select-Object -First 1).Id
     LogLine $BootLog ("POST_KEEP_PID=" + $keepId)
-    foreach($proc2 in $procs2){
-      $procId2 = [int]$proc2.ProcessId
-      if($procId2 -ne [int]$keepId){
-        LogLine $BootLog ("POST_KILLING_PID=" + $procId2)
-        HardKill $procId2
+    foreach($p2 in $procs2){
+      $pid2 = [int]$p2.ProcessId
+      if($pid2 -ne [int]$keepId){
+        LogLine $BootLog ("POST_KILLING_PID=" + $pid2)
+        HardKill $pid2
       }
     }
   }
