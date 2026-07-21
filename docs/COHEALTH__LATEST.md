@@ -2,7 +2,7 @@
 
 > Shadow-mode CoGuardian v0 (report-only).
 
-- GENERATED_UTC=20260720T062429Z
+- GENERATED_UTC=20260721T060412Z
 - INPUT_COBUSMIRROR_SHA=04bed0636172b425fbb3ca85ced3af69b35aff14
 - INPUT_RAW_BASE=https://raw.githubusercontent.com/CoCivium/CoBusMirror/04bed0636172b425fbb3ca85ced3af69b35aff14
 - RAW_COPRE=https://raw.githubusercontent.com/CoCivium/CoBusMirror/04bed0636172b425fbb3ca85ced3af69b35aff14/docs/COBUS_LITE/canon/COPRE_SUBSESSION__LATEST.md
@@ -10,8 +10,8 @@
 
 ## Summary
 - OK=0
-- NEEDS_FIELDS=24
-- MISSING_OR_UNFETCHABLE=76
+- NEEDS_FIELDS=23
+- MISSING_OR_UNFETCHABLE=77
 
 ## Subsessions
 
@@ -22,7 +22,7 @@
 | Sub3 | NEEDS_UTC |  |  | https://raw.githubusercontent.com/CoCivium/CoBusMirror/04bed0636172b425fbb3ca85ced3af69b35aff14/docs/COBUS_LITE/bus/subsessions/Sub3__LATEST.md |
 | Sub4 | NEEDS_UTC |  |  | https://raw.githubusercontent.com/CoCivium/CoBusMirror/04bed0636172b425fbb3ca85ced3af69b35aff14/docs/COBUS_LITE/bus/subsessions/Sub4__LATEST.md |
 | Sub5 | NEEDS_UTC |  |  | https://raw.githubusercontent.com/CoCivium/CoBusMirror/04bed0636172b425fbb3ca85ced3af69b35aff14/docs/COBUS_LITE/bus/subsessions/Sub5__LATEST.md |
-| Sub6 | NEEDS_UTC |  |  | https://raw.githubusercontent.com/CoCivium/CoBusMirror/04bed0636172b425fbb3ca85ced3af69b35aff14/docs/COBUS_LITE/bus/subsessions/Sub6__LATEST.md |
+| Sub6 | MISSING/UNFETCHABLE |  |  | https://raw.githubusercontent.com/CoCivium/CoBusMirror/04bed0636172b425fbb3ca85ced3af69b35aff14/docs/COBUS_LITE/bus/subsessions/Sub6__LATEST.md |
 | Sub7 | NEEDS_UTC |  |  | https://raw.githubusercontent.com/CoCivium/CoBusMirror/04bed0636172b425fbb3ca85ced3af69b35aff14/docs/COBUS_LITE/bus/subsessions/Sub7__LATEST.md |
 | Sub8 | NEEDS_UTC |  |  | https://raw.githubusercontent.com/CoCivium/CoBusMirror/04bed0636172b425fbb3ca85ced3af69b35aff14/docs/COBUS_LITE/bus/subsessions/Sub8__LATEST.md |
 | Sub9 | NEEDS_UTC |  |  | https://raw.githubusercontent.com/CoCivium/CoBusMirror/04bed0636172b425fbb3ca85ced3af69b35aff14/docs/COBUS_LITE/bus/subsessions/Sub9__LATEST.md |
