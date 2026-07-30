@@ -2,7 +2,7 @@
 
 > Shadow-mode CoGuardian v0 (report-only).
 
-- GENERATED_UTC=20260729T060550Z
+- GENERATED_UTC=20260730T055745Z
 - INPUT_COBUSMIRROR_SHA=04bed0636172b425fbb3ca85ced3af69b35aff14
 - INPUT_RAW_BASE=https://raw.githubusercontent.com/CoCivium/CoBusMirror/04bed0636172b425fbb3ca85ced3af69b35aff14
 - RAW_COPRE=https://raw.githubusercontent.com/CoCivium/CoBusMirror/04bed0636172b425fbb3ca85ced3af69b35aff14/docs/COBUS_LITE/canon/COPRE_SUBSESSION__LATEST.md
