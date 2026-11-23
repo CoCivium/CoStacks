@@ -15,3 +15,9 @@ jobs:
           $ErrorActionPreference='Stop'
           Set-StrictMode -Version Latest
           pwsh -NoProfile -NonInteractive -NoLogo -File tools/coprime.validate.ps1
+      - name: Test CoGuardian scanner classifications (offline)
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          Set-StrictMode -Version Latest
+          pwsh -NoProfile -NonInteractive -NoLogo -File tools/coguardian/test-classification.ps1
