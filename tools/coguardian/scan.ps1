@@ -11,8 +11,13 @@ $ProgressPreference = 'SilentlyContinue'
 function UTS { (Get-Date).ToUniversalTime().ToString('yyyyMMddTHHmmssZ') }
 
 function Fetch([string]$url){
-  try { return (Invoke-WebRequest -Uri $url -TimeoutSec 20).Content }
-  catch { return $null }
+  try { return [pscustomobject]@{ Content=(Invoke-WebRequest -Uri $url -TimeoutSec 20).Content; Kind='FETCHED' } }
+  catch {
+    $code = $null
+    if ($_.Exception.Response) { $code = [int]$_.Exception.Response.StatusCode }
+    if ($code -eq 404) { return [pscustomobject]@{ Content=$null; Kind='NOT_FOUND' } }
+    return [pscustomobject]@{ Content=$null; Kind='FETCH_ERROR' }
+  }
 }
 
 $utc = UTS
@@ -20,17 +25,18 @@ $rawBase = "https://raw.githubusercontent.com/CoCivium/CoBusMirror/$CoBusMirrorS
 
 $rawCoPre  = "$rawBase/docs/COBUS_LITE/canon/COPRE_SUBSESSION__LATEST.md"
 $rawIndex  = "$rawBase/docs/COBUS_LITE/canon/WAVESET_SUBSESSIONS_INDEX__LATEST.md"
-$coPreTxt  = Fetch $rawCoPre
-$idxTxt    = Fetch $rawIndex
+$coPreTxt  = (Fetch $rawCoPre).Content
+$idxTxt    = (Fetch $rawIndex).Content
 
 $rows = New-Object System.Collections.Generic.List[object]
 for($i=1; $i -le $MaxSubs; $i++){
   $sid = "Sub{0}" -f $i
   $busUrl = "$rawBase/docs/COBUS_LITE/bus/subsessions/${sid}__LATEST.md"
-  $txt = Fetch $busUrl
+  $fetched = Fetch $busUrl
+  $txt = $fetched.Content
 
-  if(-not $txt){
-    $rows.Add([pscustomobject]@{ Sub=$sid; Status="MISSING/UNFETCHABLE"; LastUTC=""; LastState=""; Url=$busUrl })
+  if($fetched.Kind -ne 'FETCHED'){
+    $rows.Add([pscustomobject]@{ Sub=$sid; Status=$fetched.Kind; LastUTC=""; LastState=""; Url=$busUrl })
     continue
   }
 
@@ -43,7 +49,7 @@ for($i=1; $i -le $MaxSubs; $i++){
   $mSt = [regex]::Matches($txt, 'STATE=([a-zA-Z0-9_\-]+)')
   if($mSt.Count -gt 0){ $lastState = $mSt[$mSt.Count-1].Groups[1].Value }
 
-  $status = "OK"
+  $status = "FIELDS_PRESENT_FRESHNESS_UNKNOWN"
   if([string]::IsNullOrWhiteSpace($lastUtc)){ $status = "NEEDS_UTC" }
   elseif([string]::IsNullOrWhiteSpace($lastState)){ $status = "NEEDS_STATE" }
 
@@ -61,13 +67,16 @@ $out.Add("- INPUT_RAW_BASE=$rawBase")
 $out.Add("- RAW_COPRE=$rawCoPre")
 $out.Add("- RAW_INDEX=$rawIndex")
 $out.Add("")
-$ok = @($rows | Where-Object { $_.Status -eq "OK" }).Count
-$miss = @($rows | Where-Object { $_.Status -like "MISSING*" }).Count
-$need = @($rows | Where-Object { $_.Status -ne "OK" -and $_.Status -notlike "MISSING*" }).Count
+$fields = @($rows | Where-Object { $_.Status -eq "FIELDS_PRESENT_FRESHNESS_UNKNOWN" }).Count
+$notFound = @($rows | Where-Object { $_.Status -eq "NOT_FOUND" }).Count
+$fetchError = @($rows | Where-Object { $_.Status -eq "FETCH_ERROR" }).Count
+$need = @($rows | Where-Object { $_.Status -like "NEEDS_*" }).Count
 $out.Add("## Summary")
-$out.Add("- OK=$ok")
+$out.Add("- FIELDS_PRESENT_FRESHNESS_UNKNOWN=$fields")
 $out.Add("- NEEDS_FIELDS=$need")
-$out.Add("- MISSING_OR_UNFETCHABLE=$miss")
+$out.Add("- NOT_FOUND=$notFound")
+$out.Add("- FETCH_ERROR=$fetchError")
+$out.Add("- LIVENESS=UNPROVEN (no heartbeat lease or runtime check)")
 $out.Add("")
 $out.Add("## Subsessions")
 $out.Add("")
