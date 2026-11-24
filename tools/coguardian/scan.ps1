@@ -14,7 +14,11 @@ function Fetch([string]$url){
   try { return [pscustomobject]@{ Content=(Invoke-WebRequest -Uri $url -TimeoutSec 20).Content; Kind='FETCHED' } }
   catch {
     $code = $null
-    if ($_.Exception.Response) { $code = [int]$_.Exception.Response.StatusCode }
+    $response = $_.Exception.PSObject.Properties['Response']
+    if ($null -ne $response -and $null -ne $response.Value) {
+      $status = $response.Value.PSObject.Properties['StatusCode']
+      if ($null -ne $status) { $code = [int]$status.Value }
+    }
     if ($code -eq 404) { return [pscustomobject]@{ Content=$null; Kind='NOT_FOUND' } }
     return [pscustomobject]@{ Content=$null; Kind='FETCH_ERROR' }
   }
